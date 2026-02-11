@@ -1,19 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Room Setup</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomVision - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 1rem;
+            padding: 3rem;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #1E293B;
+            margin-bottom: 1rem;
+        }
+        
+        p {
+            color: #64748B;
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon svg {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: #3B82F6;
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #2563EB;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #3B82F6;
+            border: 2px solid #3B82F6;
+        }
+        
+        .btn-secondary:hover {
+            background: #F8FAFC;
+        }
+        
+        .user-info {
+            background: #F8FAFC;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+            text-align: left;
+        }
+        
+        .user-info h3 {
+            color: #1E293B;
+            margin-bottom: 0.5rem;
+        }
+        
+        .user-info p {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+    </style>
 </head>
 <body>
-
-<h1>Room Setup</h1>
-
-<div class="card">
-    <input type="number" id="width" placeholder="Room Width (m)">
-    <input type="number" id="length" placeholder="Room Length (m)">
-    <button id="createRoomBtn">Create Room</button>
-</div>
-
-<script type="module" src="js/room.js"></script>
+    <div class="container">
+        <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 11L12 14L22 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        
+        <h1>Welcome to RoomVision! 🎉</h1>
+        <p>You've successfully logged in. This is a placeholder for the main RoomVision dashboard where you'll be able to create and visualize room designs.</p>
+        
+        <div class="user-info" id="userInfo">
+            <h3>User Information</h3>
+            <p id="userEmail">Loading...</p>
+            <p id="userName">Loading...</p>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <button class="btn" onclick="alert('Room setup functionality coming soon!')">
+                Start New Project
+            </button>
+            <button class="btn btn-secondary" id="logoutBtn">
+                Logout
+            </button>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { auth } from "./js/firebase-config.js";
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        
+        // Check if user is logged in
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                document.getElementById('userEmail').textContent = `Email: ${user.email}`;
+                document.getElementById('userName').textContent = `Display Name: ${user.displayName || 'Not set'}`;
+            } else {
+                // No user is signed in, redirect to login
+                window.location.href = "index.html";
+            }
+        });
+        
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                window.location.href = "index.html";
+            } catch (error) {
+                alert('Error signing out: ' + error.message);
+            }
+        });
+    </script>
 </body>
 </html>
