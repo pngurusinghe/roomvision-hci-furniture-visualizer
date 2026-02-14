@@ -160,10 +160,10 @@ loginForm.addEventListener("submit", async (e) => {
         
         showMessage('Login successful! Redirecting...', 'success');
         
-        // Redirect after a short delay
+        // Redirect after a short delay to projects page
         setTimeout(() => {
-            window.location.href = "room-setup.html";
-        }, 1000);
+            window.location.href = "projects.html";
+        }, 700);
         
     } catch (error) {
         setLoading(false);
