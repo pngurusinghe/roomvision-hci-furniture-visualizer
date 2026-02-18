@@ -159,11 +159,18 @@ loginForm.addEventListener("submit", async (e) => {
         }
         
         showMessage('Login successful! Redirecting...', 'success');
-        
-        // Redirect after a short delay to projects page
+
+         if (email === 'admin@roomvision.com') {
+        // Redirect to admin panel
+        setTimeout(() => {
+            window.location.href = "admin-furniture.html";
+        }, 700);
+    } else {
+        // Redirect to normal user projects page
         setTimeout(() => {
             window.location.href = "projects.html";
         }, 700);
+    }
         
     } catch (error) {
         setLoading(false);

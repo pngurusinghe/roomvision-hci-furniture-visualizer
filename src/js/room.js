@@ -533,7 +533,7 @@ async function handleFormSubmit(e) {
         
         // Navigate to 2D Editor after brief delay
         setTimeout(() => {
-            window.location.href = 'editor-2d.html';
+            window.location.href = 'furniture-shop.html';
         }, 1500);
         
     } catch (error) {

@@ -1,44 +1,406 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>2D Editor</title>
-    <link rel="stylesheet" href="/css/room.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomVision - 2D Editor</title>
+    <script src="https://unpkg.com/konva@9/konva.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        /* Top toolbar */
+        .top-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .view-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .view-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .view-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        /* Zoom controls */
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px;
+            border-left: 1px solid #ddd;
+            margin-left: 20px;
+        }
+
+        .zoom-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .zoom-slider {
+            width: 120px;
+            height: 4px;
+            border-radius: 2px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .zoom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #45a049;
+        }
+
+        .zoom-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .zoom-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            background: #45a049;
+        }
+
+        .zoom-value {
+            font-size: 13px;
+            color: #333;
+            font-weight: 600;
+            min-width: 45px;
+        }
+
+        .zoom-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: #f0f0f0;
+            border-color: #4CAF50;
+        }
+
+        .toolbar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Canvas area */
+        .canvas-area {
+            margin-top: 60px;
+            height: calc(100vh - 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            cursor: grab;
+        }
+
+        #canvas-container.grabbing {
+            cursor: grabbing;
+        }
+
+        /* Room info panel */
+        .room-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .room-info h4 {
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .room-info p {
+            font-size: 12px;
+            color: #666;
+            margin: 4px 0;
+        }
+
+        /* Instructions */
+        .instructions {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff9e6;
+            padding: 12px 20px;
+            border-radius: 4px;
+            border-left: 4px solid #ffc107;
+            font-size: 13px;
+            color: #666;
+            z-index: 100;
+            animation: fadeIn 0.5s;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .instructions.hidden {
+            display: none;
+        }
+
+        /* Delete button for selected furniture */
+        .delete-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 100;
+        }
+
+        .delete-btn.visible {
+            display: block;
+        }
+
+        .delete-btn:hover {
+            background: #da190b;
+        }
+
+        /* Keyboard shortcuts help */
+        .shortcuts-help {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 12px;
+            color: #666;
+            z-index: 100;
+        }
+
+        .shortcuts-help h4 {
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .shortcut-item {
+            display: flex;
+            gap: 10px;
+            margin: 4px 0;
+        }
+
+        .shortcut-key {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-
-<header class="app-header">
-    <div class="header-container">
-        <div class="header-left">
-            <a class="logo" href="projects.html">
-                <div class="logo-icon" aria-hidden="true">
-                    <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 16L24 8L38 16V32L24 40L10 32V16Z" fill="#fff" opacity="0.95"/>
-                    </svg>
-                </div>
-                <div class="logo-text">RoomVision</div>
-            </a>
+    <div class="top-toolbar">
+        <div class="toolbar-left">
+            <div class="logo">
+                🏠 RoomVision
+            </div>
+            
+            <div class="view-buttons">
+                <button class="view-btn active" data-view="top">Top View</button>
+                <button class="view-btn" data-view="left">Left Angle</button>
+                <button class="view-btn" data-view="right">Right Angle</button>
+                <button class="view-btn" data-view="isometric">Isometric</button>
+            </div>
+            
+            <div class="zoom-controls">
+                <span class="zoom-label">Zoom:</span>
+                <button class="zoom-btn" id="zoomOut">−</button>
+                <input type="range" class="zoom-slider" id="zoomSlider" min="50" max="200" value="100" step="5">
+                <span class="zoom-value" id="zoomValue">100%</span>
+                <button class="zoom-btn" id="zoomIn">+</button>
+            </div>
         </div>
-        <nav class="header-nav">
-            <a href="projects.html" class="nav-link"><span>Projects</span></a>
-            <a href="room-setup.html" class="nav-link"><span>Room Setup</span></a>
-            <a href="editor-2d.html" class="nav-link active"><span>2D Editor</span></a>
-            <a href="view-3d.html" class="nav-link"><span>3D View</span></a>
-        </nav>
-        <div class="header-right">
-            <a href="projects.html" class="user-info" title="Back to My Projects">📁 My Projects</a>
+
+        <div class="toolbar-right">
+            <button class="btn btn-secondary" onclick="window.location.href='furniture-shop.html'">
+                🛒 Add More Furniture
+            </button>
+            <button class="btn btn-secondary" onclick="window.location.href='room-setup.html'">
+                ← Back to Room
+            </button>
+            <button class="btn btn-primary" id="saveBtn">
+                💾 Save Layout
+            </button>
         </div>
     </div>
-</header>
 
-<main style="padding: 20px;">
-<h1>2D Editor</h1>
-<canvas id="canvas2d" width="600" height="400"></canvas>
+    <div class="canvas-area" id="canvasArea">
+        <div class="instructions" id="instructions">
+            💡 <strong>Tip:</strong> Click furniture to select, drag to move, use handles to rotate/resize. Hold <kbd>Space</kbd> to pan the canvas.
+        </div>
+        <div id="canvas-container"></div>
+    </div>
 
-<button onclick="location.href='view-3d.html'" style="margin-top: 16px; padding: 8px 16px; cursor: pointer;">
-Switch to 3D View
-</button>
-</main>
+    <div class="room-info" id="roomInfo">
+        <h4>Room Details</h4>
+        <p id="roomDimensions">-</p>
+        <p id="roomType">-</p>
+        <p id="roomArea">-</p>
+    </div>
 
-<script type="module" src="js/canvas2d.js"></script>
+    <div class="shortcuts-help">
+        <h4>⌨️ Keyboard Shortcuts</h4>
+        <div class="shortcut-item">
+            <span class="shortcut-key">Space</span>
+            <span>+ Drag to pan</span>
+        </div>
+        <div class="shortcut-item">
+            <span class="shortcut-key">Del</span>
+            <span>Delete selected</span>
+        </div>
+        <div class="shortcut-item">
+            <span class="shortcut-key">Scroll</span>
+            <span>Zoom in/out</span>
+        </div>
+    </div>
+
+    <button class="delete-btn" id="deleteBtn">🗑️ Delete Selected</button>
+
+    <script type="module" src="js/editor-2d.js"></script>
 </body>
 </html>
