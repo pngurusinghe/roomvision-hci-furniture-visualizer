@@ -4,6 +4,9 @@
  */
 
 import { showError, showSuccess, showWarning, showLoading, hideLoading } from './ui-feedback.js';
+import { auth, db } from './firebase-config.js';
+import { collection, addDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
 
 // ============================================
 // ROOM EDITOR CLASS
@@ -42,6 +45,7 @@ class RoomEditor {
         this.setupViewButtons();
         this.setupZoomControls();
         this.setupSaveButton();
+        this.setupDownloadButton();
         this.setupDeleteButton();
         this.setupCanvasPanning();
         this.loadSavedLayout();
@@ -443,6 +447,22 @@ class RoomEditor {
         const saveBtn = document.getElementById('saveBtn');
         saveBtn.addEventListener('click', () => this.saveLayout());
     }
+
+setupDownloadButton() {
+    const downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            // Show download options
+            const options = confirm('Download as IMAGE (OK) or JSON data (Cancel)?');
+            if (options) {
+                this.downloadDesign(); // Download PNG
+            } else {
+                this.downloadDesignJSON(); // Download JSON
+            }
+        });
+    }
+}
+
     
     setupDeleteButton() {
         const deleteBtn = document.getElementById('deleteBtn');
@@ -465,42 +485,170 @@ class RoomEditor {
             }
         });
     }
-    
-    saveLayout() {
-        const roomId = sessionStorage.getItem('currentRoomId');
-        const furniture = [];
+
+    // Add this method to RoomEditor class
+downloadDesign() {
+    try {
+        // Generate high-quality image
+        const dataURL = this.stage.toDataURL({
+            pixelRatio: 2,
+            mimeType: 'image/png'
+        });
         
+        // Create download link
+        const link = document.createElement('a');
+        const designName = `${this.roomData.roomType || 'room'}_design_${Date.now()}.png`;
+        link.download = designName;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showSuccess('Design downloaded successfully!', 2000);
+    } catch (error) {
+        console.error('Download error:', error);
+        showError('Failed to download design');
+    }
+}
+
+// Add this method to save as JSON
+downloadDesignJSON() {
+    try {
+        const furnitureData = [];
         this.furnitureLayer.getChildren().forEach(node => {
             if (node === this.transformer) return;
             const furnitureNode = node.findOne('.furniture');
             if (!furnitureNode) return;
             
-            furniture.push({
+            furnitureData.push({
                 id: furnitureNode.getAttr('furnitureId'),
-                image: furnitureNode.getAttr('furnitureImage'),
                 name: furnitureNode.getAttr('furnitureName'),
+                image: furnitureNode.getAttr('furnitureImage'),
                 x: node.x(),
                 y: node.y(),
                 rotation: node.rotation(),
                 scaleX: node.scaleX(),
-                scaleY: node.scaleY(),
-                originalWidth: furnitureNode.getAttr('originalWidth'),
-                originalHeight: furnitureNode.getAttr('originalHeight')
+                scaleY: node.scaleY()
             });
         });
         
-        const layoutData = {
-            roomId: roomId,
-            furniture: furniture,
+        const designData = {
+            roomData: this.roomData,
+            furniture: furnitureData,
             view: this.currentView,
             zoom: this.currentZoom,
-            savedAt: new Date().toISOString()
+            exportedAt: new Date().toISOString()
         };
         
-        sessionStorage.setItem('currentRoomLayout', JSON.stringify(layoutData));
-        showSuccess('Floor plan saved successfully!', 2000);
-        console.log('💾 Layout saved:', layoutData);
+        const dataStr = JSON.stringify(designData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.download = `${this.roomData.roomType || 'room'}_design_${Date.now()}.json`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showSuccess('Design data downloaded as JSON!', 2000);
+    } catch (error) {
+        console.error('Download error:', error);
+        showError('Failed to download design data');
     }
+}
+
+
+    
+async saveLayout() {
+    try {
+        showLoading('Saving design...');
+        
+        const user = auth.currentUser;
+        
+        if (!user) {
+            hideLoading();
+            showError('You must be logged in to save designs');
+            return;
+        }
+        
+        // Collect ONLY furniture references (no image data)
+        const furnitureData = [];
+        this.furnitureLayer.getChildren().forEach(node => {
+            if (node === this.transformer) return;
+            const furnitureNode = node.findOne('.furniture');
+            if (!furnitureNode) return;
+            
+            // Store ONLY the furniture ID - we'll fetch details from catalog later
+            furnitureData.push({
+                furnitureId: furnitureNode.getAttr('furnitureId'), // Reference to furniture catalog
+                x: Math.round(node.x()),
+                y: Math.round(node.y()),
+                rotation: Math.round(node.rotation()),
+                scaleX: parseFloat(node.scaleX().toFixed(2)),
+                scaleY: parseFloat(node.scaleY().toFixed(2))
+            });
+        });
+        
+        // Minimal room data
+        const designData = {
+            userId: user.uid,
+            userEmail: user.email,
+            designName: `${this.roomData.roomType || 'Room'} Design`,
+            room: {
+                width: this.roomData.width,
+                length: this.roomData.length,
+                height: this.roomData.height,
+                floorColor: this.roomData.floorColor || '#F5DEB3',
+                wallColor: this.roomData.wallColor || '#FFFFFF',
+                type: this.roomData.roomType || 'living-room'
+            },
+            furniture: furnitureData, // Just IDs and positions
+            furnitureCount: furnitureData.length,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        const estimatedSize = JSON.stringify(designData).length;
+        console.log('📊 Design data size:', estimatedSize, 'bytes');
+        
+        if (estimatedSize > 950000) {
+            hideLoading();
+            showError('Design has too many furniture items. Maximum is about 100 items.');
+            return;
+        }
+        
+        console.log('💾 Saving to Firestore...');
+        
+        // Save to Firestore
+        const docRef = await addDoc(collection(db, 'designs'), designData);
+        
+        console.log('✅ Design saved with ID:', docRef.id);
+        
+        // Clear temporary data
+        sessionStorage.setItem('lastSavedDesignId', docRef.id);
+        sessionStorage.removeItem('furnitureCart');
+        sessionStorage.removeItem('currentRoomLayout');
+        
+        hideLoading();
+        showSuccess('Design saved successfully!', 2000);
+        
+        setTimeout(() => {
+            window.location.href = 'manage-designs.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Error saving design:', error);
+        hideLoading();
+        
+        if (error.code === 'resource-exhausted' || error.message?.includes('exceeds the maximum')) {
+            showError('Design is too large. Please reduce the number of furniture items.');
+        } else {
+            showError('Failed to save design: ' + error.message);
+        }
+    }
+}
     
     loadSavedLayout() {
         // Skip for now - will be implemented later

@@ -364,12 +364,7 @@ body {
                 🏠 RoomVision
             </div>
             
-            <div class="view-buttons">
-                <button class="view-btn active" data-view="top">Top View</button>
-                <button class="view-btn" data-view="left">Left Angle</button>
-                <button class="view-btn" data-view="right">Right Angle</button>
-                <button class="view-btn" data-view="isometric">Isometric</button>
-            </div>
+          
             
             <div class="zoom-controls">
                 <span class="zoom-label">Zoom:</span>
@@ -387,11 +382,17 @@ body {
             <button class="btn btn-secondary" onclick="window.location.href='room-setup.html'">
                 ← Back to Room
             </button>
+             <!-- Add Download Button -->
+    <button class="btn btn-secondary" id="downloadBtn">
+        📥 Download
+    </button>
             <button class="btn btn-primary" id="saveBtn">
                 💾 Save Layout
             </button>
         </div>
     </div>
+
+    
 
     <div class="canvas-area" id="canvasArea">
         <div class="instructions" id="instructions">

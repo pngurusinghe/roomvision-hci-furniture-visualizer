@@ -21,12 +21,33 @@ let searchQuery = '';
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
+    checkAndClearCart(); // 👈 ADD THIS
     loadRoomInfo();
     loadCart();
     await loadFurnitureFromFirebase();
     renderProducts();
     setupEventListeners();
 });
+
+// ============================================
+// CHECK AND CLEAR CART FOR NEW PROJECTS
+// ============================================
+
+function checkAndClearCart() {
+    const currentRoomId = sessionStorage.getItem('currentRoomId');
+    const lastCartRoomId = sessionStorage.getItem('cartRoomId');
+    
+    // If this is a new room/project, clear the cart
+    if (currentRoomId && currentRoomId !== lastCartRoomId) {
+        console.log('🧹 New project detected, clearing old cart');
+        sessionStorage.removeItem('furnitureCart');
+        sessionStorage.setItem('cartRoomId', currentRoomId);
+        cart = [];
+    } else if (currentRoomId && !lastCartRoomId) {
+        // First time setting cart room ID
+        sessionStorage.setItem('cartRoomId', currentRoomId);
+    }
+}
 
 // ============================================
 // LOAD FURNITURE FROM FIREBASE
