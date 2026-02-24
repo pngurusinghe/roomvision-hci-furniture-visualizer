@@ -143,11 +143,18 @@ async function loadFurniture() {
     console.log('Loading furniture...');
 
     try {
-        const querySnapshot = await getDocs(collection(db, 'furniture'));
+        // Add a manual timeout race since Firestore getDocs can hang silently on bad connections
+        const fetchPromise = getDocs(collection(db, 'furniture'));
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Firestore connection timeout after 10s. Are you offline?')), 10000)
+        );
+
+        const querySnapshot = await Promise.race([fetchPromise, timeoutPromise]);
+
         console.log('Found', querySnapshot.size, 'furniture items');
 
         if (querySnapshot.empty) {
-            listContainer.innerHTML = '<div class="loading">No furniture items yet</div>';
+            listContainer.innerHTML = '<div class="loading">No furniture items found in inventory.</div>';
             return;
         }
 
