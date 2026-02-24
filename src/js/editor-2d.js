@@ -441,6 +441,53 @@ class RoomEditor {
                 this.currentView = view;
             });
         });
+        
+        const view3dBtn = document.getElementById('view3dBtn');
+        if (view3dBtn) {
+            view3dBtn.addEventListener('click', () => this.transitionTo3D());
+        }
+    }
+    
+    transitionTo3D() {
+        // Collect furniture data into session storage so the 3D page can read it quickly
+        // We do this instead of waiting for a slow Firestore save/read cycle just for switching views
+        const furnitureData = [];
+        this.furnitureLayer.getChildren().forEach(node => {
+            if (node === this.transformer) return;
+            const furnitureNode = node.findOne('.furniture');
+            if (!furnitureNode) return;
+            
+            furnitureData.push({
+                furnitureId: furnitureNode.getAttr('furnitureId'),
+                name: furnitureNode.getAttr('furnitureName'),
+                image: furnitureNode.getAttr('furnitureImage'),
+                originalWidth: furnitureNode.getAttr('originalWidth'),
+                originalHeight: furnitureNode.getAttr('originalHeight'),
+                x: Math.round(node.x()),
+                y: Math.round(node.y()),
+                rotation: Math.round(node.rotation()),
+                scaleX: parseFloat(node.scaleX().toFixed(2)),
+                scaleY: parseFloat(node.scaleY().toFixed(2))
+            });
+        });
+        
+        sessionStorage.setItem('current3DLayout', JSON.stringify({
+            roomData: this.roomData,
+            furniture: furnitureData
+        }));
+        
+        // Trigger smooth transition overlay
+        const overlay = document.getElementById('transitionOverlay');
+        if (overlay) {
+            overlay.classList.add('active');
+            
+            // Wait for animation, then redirect
+            setTimeout(() => {
+                window.location.href = 'view-3d.html';
+            }, 1500);
+        } else {
+            window.location.href = 'view-3d.html';
+        }
     }
     
     setupSaveButton() {

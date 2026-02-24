@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Projects - RoomVision</title>
-    <link rel="stylesheet" href="/css/room.css">
-    <link rel="stylesheet" href="/css/projects.css">
+    <link rel="stylesheet" href="../css/room.css">
+    <link rel="stylesheet" href="../css/projects.css">
 </head>
+
 <body>
     <header class="app-header">
         <div class="header-container">
@@ -20,15 +22,15 @@
                                     <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
                                 </linearGradient>
                             </defs>
-                            <rect width="40" height="40" rx="10" fill="url(#logoGradientProjects)"/>
-                            <path d="M20 12L27 18H24V26H16V18H13L20 12Z" fill="white"/>
-                            <circle cx="20" cy="32" r="2" fill="white" opacity="0.6"/>
+                            <rect width="40" height="40" rx="10" fill="url(#logoGradientProjects)" />
+                            <path d="M20 12L27 18H24V26H16V18H13L20 12Z" fill="white" />
+                            <circle cx="20" cy="32" r="2" fill="white" opacity="0.6" />
                         </svg>
                     </div>
                     <span class="logo-text">RoomVision</span>
                     <span class="stats-badge">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                            <path d="M6 1l1.5 3 3.5.5-2.5 2.5.5 3.5L6 9l-3 1.5.5-3.5L1 4.5l3.5-.5z"/>
+                            <path d="M6 1l1.5 3 3.5.5-2.5 2.5.5 3.5L6 9l-3 1.5.5-3.5L1 4.5l3.5-.5z" />
                         </svg>
                         Beta
                     </span>
@@ -47,7 +49,8 @@
                 </div>
                 <div class="user-info" id="userInfo">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM7 9a1 1 0 112 0 1 1 0 01-2 0zm7 4a1 1 0 01-1 1H7a1 1 0 010-2h6a1 1 0 011 1z"/>
+                        <path
+                            d="M10 2a8 8 0 100 16 8 8 0 000-16zM7 9a1 1 0 112 0 1 1 0 01-2 0zm7 4a1 1 0 01-1 1H7a1 1 0 010-2h6a1 1 0 011 1z" />
                     </svg>
                     <span id="userName">Loading...</span>
                 </div>
@@ -66,12 +69,13 @@
         <div class="projects-header">
             <div class="header-content">
                 <h1>Your Projects</h1>
-                <p class="page-subtitle">Create a project to group multiple room setups. Click "Open" to start designing rooms.</p>
+                <p class="page-subtitle">Create a project to group multiple room setups. Click "Open" to start designing
+                    rooms.</p>
             </div>
             <div class="projects-actions">
                 <button id="createProjectBtn" class="btn-primary">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10 5v10M5 10h10"/>
+                        <path d="M10 5v10M5 10h10" />
                     </svg>
                     <span>New Project</span>
                 </button>
@@ -82,13 +86,13 @@
             <div class="section-header-inline">
                 <h2>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z"/>
+                        <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" />
                     </svg>
                     All Projects
                 </h2>
                 <span class="project-count" id="projectCount">0 projects</span>
             </div>
-            
+
             <div class="projects-list" id="projectsList" aria-live="polite">
                 <!-- Loading state -->
                 <div class="loading-skeleton">
@@ -108,7 +112,7 @@
                 <h2 id="modalTitle">Create New Project</h2>
                 <button type="button" class="modal-close" id="modalClose" aria-label="Close modal">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
+                        <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -118,29 +122,15 @@
                         Project Title
                         <span class="required">*</span>
                     </label>
-                    <input 
-                        id="projectTitle" 
-                        name="title" 
-                        type="text" 
-                        class="form-input"
-                        placeholder="e.g., My Dream Home"
-                        required 
-                        maxlength="100"
-                        aria-required="true"
-                    >
+                    <input id="projectTitle" name="title" type="text" class="form-input"
+                        placeholder="e.g., My Dream Home" required maxlength="100" aria-required="true">
                     <span class="char-count"><span id="titleCount">0</span>/100</span>
                 </div>
 
                 <div class="form-group">
                     <label for="projectDesc" class="form-label">Description</label>
-                    <textarea 
-                        id="projectDesc" 
-                        name="description" 
-                        class="form-textarea"
-                        placeholder="Describe your project..."
-                        rows="4" 
-                        maxlength="500"
-                    ></textarea>
+                    <textarea id="projectDesc" name="description" class="form-textarea"
+                        placeholder="Describe your project..." rows="4" maxlength="500"></textarea>
                     <span class="char-count"><span id="descCount">0</span>/500</span>
                 </div>
 
@@ -149,8 +139,9 @@
                         Cancel
                     </button>
                     <button type="submit" class="btn-primary">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 10l3 3 7-7"/>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M5 10l3 3 7-7" />
                         </svg>
                         <span>Create Project</span>
                     </button>
@@ -169,7 +160,7 @@
     <script type="module">
         import { auth } from './js/firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        
+
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'index.html';
@@ -182,7 +173,7 @@
         const themeToggle = document.getElementById('themeToggle');
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
-        
+
         if (themeToggle) {
             themeToggle.addEventListener('click', () => {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -194,4 +185,5 @@
     </script>
     <script type="module" src="js/projects.js"></script>
 </body>
+
 </html>
