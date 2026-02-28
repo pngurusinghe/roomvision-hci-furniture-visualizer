@@ -82,6 +82,7 @@ document.getElementById('addFurnitureForm').addEventListener('submit', async fun
     const height = parseFloat(document.getElementById('furnitureHeight').value);
     const price = parseFloat(document.getElementById('furniturePrice').value);
     const description = document.getElementById('furnitureDescription').value;
+    const model3dUrl = document.getElementById('furnitureModelUrl').value;
     const imageFile = document.getElementById('furnitureImage').files[0];
 
     if (!imageFile) {
@@ -106,6 +107,7 @@ document.getElementById('addFurnitureForm').addEventListener('submit', async fun
             height,
             price,
             description,
+            model3dUrl,               // Model URL for 3D visualizer
             image: imageBase64,       // full base64 data URL — no Storage needed
             createdAt: new Date().toISOString()
         };
