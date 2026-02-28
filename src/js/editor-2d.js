@@ -461,7 +461,6 @@ class RoomEditor {
                 furnitureId: furnitureNode.getAttr('furnitureId'),
                 name: furnitureNode.getAttr('furnitureName'),
                 image: furnitureNode.getAttr('furnitureImage'),
-                model3dUrl: furnitureNode.getAttr('model3dUrl'),
                 originalWidth: furnitureNode.getAttr('originalWidth'),
                 originalHeight: furnitureNode.getAttr('originalHeight'),
                 x: Math.round(node.x()),
@@ -814,7 +813,6 @@ class RoomEditor {
                 furnitureImage.setAttr('furnitureId', item.id);
                 furnitureImage.setAttr('furnitureImage', item.image);
                 furnitureImage.setAttr('furnitureName', item.name);
-                furnitureImage.setAttr('model3dUrl', item.model3dUrl);
                 furnitureImage.setAttr('originalWidth', img.width);
                 furnitureImage.setAttr('originalHeight', img.height);
 

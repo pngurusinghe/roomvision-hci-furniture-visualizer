@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 class Room3DVisualizer {
     constructor() {
@@ -16,11 +15,6 @@ class Room3DVisualizer {
         // We know from 2D editor: this.scale = 80 pixels per meter.
         this.pixelToMeterRatio = 1 / 80;
 
-        this.animationId = null;
-        this.resizeTimeout = null;
-        this.modelsLoaded = 0;
-        this.totalModels = 0;
-
         this.init();
     }
 
@@ -35,32 +29,14 @@ class Room3DVisualizer {
 
         this.animate();
 
-        this.animate();
+        // Simulate short loading time to ensure textures/materials are ready, then hide overlay
+        setTimeout(() => {
+            if (this.overlay) {
+                this.overlay.classList.add('hidden');
+            }
+        }, 800);
 
         window.addEventListener('resize', this.onWindowResize.bind(this));
-        window.addEventListener('beforeunload', this.dispose.bind(this));
-    }
-
-    dispose() {
-        if (this.animationId) cancelAnimationFrame(this.animationId);
-
-        if (this.scene) {
-            this.scene.traverse((child) => {
-                if (child.isMesh) {
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) {
-                        if (Array.isArray(child.material)) {
-                            child.material.forEach(mat => mat.dispose());
-                        } else {
-                            child.material.dispose();
-                        }
-                    }
-                }
-            });
-        }
-        if (this.renderer) {
-            this.renderer.dispose();
-        }
     }
 
     loadData() {
@@ -88,7 +64,6 @@ class Room3DVisualizer {
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.container.appendChild(this.renderer.domElement);
@@ -134,11 +109,12 @@ class Room3DVisualizer {
         gridHelper.material.transparent = true;
         this.scene.add(gridHelper);
 
+        const wallMat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.9 });
+
         // Helper function to build a wall
         const buildWall = (w, h, d, x, y, z) => {
             const geo = new THREE.BoxGeometry(w, h, d);
-            const mat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.9 });
-            const mesh = new THREE.Mesh(geo, mat);
+            const mesh = new THREE.Mesh(geo, wallMat);
             mesh.position.set(x, y, z);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -162,10 +138,7 @@ class Room3DVisualizer {
 
     buildFurniture() {
         const furnitureItems = this.layoutData.furniture;
-        if (!furnitureItems || furnitureItems.length === 0) {
-            this.checkLoadingComplete();
-            return;
-        }
+        if (!furnitureItems || furnitureItems.length === 0) return;
 
         const roomWidthPx = this.layoutData.roomData.width * 80;
         const roomLengthPx = this.layoutData.roomData.length * 80;
@@ -174,92 +147,45 @@ class Room3DVisualizer {
         const roomTopLeftX = (window.innerWidth - 100 - roomWidthPx) / 2;
         const roomTopLeftY = (window.innerHeight - 160 - roomLengthPx) / 2;
 
-        const loader = new GLTFLoader();
-        this.totalModels = furnitureItems.length;
-
         furnitureItems.forEach((item, index) => {
             // Calculate width and depth in meters based on original image size and scale
+            // The item.originalWidth is pixels.
             const wMeters = (item.originalWidth * item.scaleX) * this.pixelToMeterRatio;
             const dMeters = (item.originalHeight * item.scaleY) * this.pixelToMeterRatio;
+            const hMeters = 0.8; // Arbitrary height for placeholder
 
             // Map 2D coordinates to 3D
+            // Konva (X, Y) relative to center of the room:
             const relativeX = item.x - roomTopLeftX - (roomWidthPx / 2);
             const relativeY = item.y - roomTopLeftY - (roomLengthPx / 2);
 
             const x3D = relativeX * this.pixelToMeterRatio;
             const z3D = relativeY * this.pixelToMeterRatio;
+            const y3D = hMeters / 2; // Sit on the floor
 
-            if (item.model3dUrl) {
-                loader.load(item.model3dUrl, (gltf) => {
-                    const model = gltf.scene;
+            // Placeholder Geometry
+            const geo = new THREE.BoxGeometry(wMeters, hMeters, dMeters);
 
-                    // Compute true bounding box of the GLTF
-                    const box = new THREE.Box3().setFromObject(model);
-                    const size = box.getSize(new THREE.Vector3());
+            // Generate a random distinct color for each furniture box, or use a brand color
+            const colorHue = (index * 137.5) % 360;
+            const mat = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(`hsl(${colorHue}, 70%, 50%)`),
+                roughness: 0.2,
+                metalness: 0.1
+            });
 
-                    // Calculate mapping scales
-                    const scaleX = wMeters / size.x;
-                    const scaleZ = dMeters / size.z;
-                    const scaleY = (scaleX + scaleZ) / 2;
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x3D, y3D, z3D);
 
-                    model.scale.set(scaleX, scaleY, scaleZ);
+            // Konva rotation is clockwise degrees. Three.js is radians.
+            // Konva rotates around Z axis (2D plane), which corresponds to Y axis in 3D
+            mesh.rotation.y = -THREE.MathUtils.degToRad(item.rotation);
 
-                    // Find new bounding box to properly center Y above ground
-                    const newBox = new THREE.Box3().setFromObject(model);
-                    const newSize = newBox.getSize(new THREE.Vector3());
-                    const y3D = newSize.y / 2;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
 
-                    model.position.set(x3D, y3D, z3D);
-                    model.rotation.y = -THREE.MathUtils.degToRad(item.rotation);
-
-                    model.traverse((child) => {
-                        if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                        }
-                    });
-
-                    this.scene.add(model);
-                    this.modelsLoaded++;
-                    this.checkLoadingComplete();
-                }, undefined, (error) => {
-                    console.error('Error loading 3D model:', item.model3dUrl, error);
-                    // Fallback to placeholder if error
-                    this.addPlaceholder(x3D, z3D, wMeters, dMeters, item.rotation, index);
-                    this.modelsLoaded++;
-                    this.checkLoadingComplete();
-                });
-            } else {
-                this.addPlaceholder(x3D, z3D, wMeters, dMeters, item.rotation, index);
-                this.modelsLoaded++;
-                this.checkLoadingComplete();
-            }
+            this.scene.add(mesh);
         });
-    }
-
-    addPlaceholder(x3D, z3D, wMeters, dMeters, rotation, index) {
-        const hMeters = 0.8;
-        const geo = new THREE.BoxGeometry(wMeters, hMeters, dMeters);
-        const colorHue = (index * 137.5) % 360;
-        const mat = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(`hsl(${colorHue}, 70%, 50%)`),
-            roughness: 0.2,
-            metalness: 0.1
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(x3D, hMeters / 2, z3D);
-        mesh.rotation.y = -THREE.MathUtils.degToRad(rotation);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        this.scene.add(mesh);
-    }
-
-    checkLoadingComplete() {
-        if (this.modelsLoaded >= this.totalModels) {
-            if (this.overlay) {
-                this.overlay.classList.add('hidden');
-            }
-        }
     }
 
     setupLighting() {
@@ -280,17 +206,14 @@ class Room3DVisualizer {
     }
 
     onWindowResize() {
-        clearTimeout(this.resizeTimeout);
-        this.resizeTimeout = setTimeout(() => {
-            if (!this.camera || !this.renderer) return;
-            this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
-            this.camera.updateProjectionMatrix();
-            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-        }, 100);
+        if (!this.camera || !this.renderer) return;
+        this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     }
 
     animate() {
-        this.animationId = requestAnimationFrame(this.animate.bind(this));
+        requestAnimationFrame(this.animate.bind(this));
         if (this.controls) this.controls.update();
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
