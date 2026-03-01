@@ -463,6 +463,11 @@ class RoomEditor {
                 image: furnitureNode.getAttr('furnitureImage'),
                 originalWidth: furnitureNode.getAttr('originalWidth'),
                 originalHeight: furnitureNode.getAttr('originalHeight'),
+                // displayWidth/displayHeight = the actual Konva image size (clamped to
+                // maxDisplaySize=120 px).  This is what was rendered on the canvas and
+                // what the 3D view must use for both sizing and centre-point maths.
+                displayWidth: furnitureNode.width(),
+                displayHeight: furnitureNode.height(),
                 x: Math.round(node.x()),
                 y: Math.round(node.y()),
                 rotation: Math.round(node.rotation()),
@@ -471,9 +476,14 @@ class RoomEditor {
             });
         });
 
+        // Store the actual Konva room-group origin so the 3D view can accurately
+        // convert absolute stage coordinates back to room-relative coordinates.
+        // Using window dimensions in view3d.js would be wrong (different page/size).
         sessionStorage.setItem('current3DLayout', JSON.stringify({
             roomData: this.roomData,
-            furniture: furnitureData
+            furniture: furnitureData,
+            canvasRoomOriginX: this.roomGroup.x(),
+            canvasRoomOriginY: this.roomGroup.y()
         }));
 
         // Trigger smooth transition overlay

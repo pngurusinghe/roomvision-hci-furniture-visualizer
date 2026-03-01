@@ -11,6 +11,7 @@
             --primary: #2563eb;
             --success: #10b981;
             --danger: #ef4444;
+            --purple: #8b5cf6;
         }
 
         * {
@@ -200,6 +201,135 @@
             padding: 2rem;
             color: #64748b;
         }
+
+        /* ---- Tabs ---- */
+        .admin-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e2e8f0;
+            max-width: 1400px;
+            margin: 1.5rem auto 0;
+            padding: 0 2rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-btn.tab-3d.active {
+            color: var(--purple);
+            border-bottom-color: var(--purple);
+        }
+
+        .tab-section {
+            display: none;
+        }
+
+        .tab-section.active {
+            display: block;
+        }
+
+        /* ---- 3D model upload area ---- */
+        .model-upload {
+            border: 2px dashed #a78bfa;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-upload:hover {
+            border-color: var(--purple);
+            background: #faf5ff;
+        }
+
+        .model-filename {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            color: #7c3aed;
+            font-weight: 500;
+        }
+
+        .progress-bar-wrap {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--purple);
+            border-radius: 9999px;
+            transition: width 0.2s;
+        }
+
+        .model3d-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            align-items: center;
+        }
+
+        .model3d-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 0.5rem;
+            background: #ede9fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .btn-primary-purple {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary-purple:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary-purple:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 
@@ -209,6 +339,14 @@
         <button class="btn-logout" onclick="logout()">Logout</button>
     </header>
 
+    <!-- Tab navigation -->
+    <div class="admin-tabs">
+        <button class="tab-btn active" id="tab2dBtn" onclick="switchTab('2d')">🪑 2D Furniture</button>
+        <button class="tab-btn tab-3d" id="tab3dBtn" onclick="switchTab('3d')">🧊 3D Models</button>
+    </div>
+
+    <!-- ===================== 2D FURNITURE SECTION ===================== -->
+    <div id="section2d" class="tab-section active">
     <div class="admin-container">
         <!-- Add Furniture Form -->
         <div class="form-card">
@@ -275,6 +413,123 @@
             </div>
         </div>
     </div>
+    </div><!-- end section2d -->
+
+    <!-- ===================== 3D MODELS SECTION ===================== -->
+    <div id="section3d" class="tab-section">
+    <div class="admin-container">
+
+        <!-- Add 3D Model Form -->
+        <div class="form-card">
+            <h2 class="card-title">Upload 3D Model</h2>
+            <form id="addModel3DForm">
+
+                <div class="form-group">
+                    <label class="form-label">Link to Furniture Item</label>
+                    <select class="form-select" id="model3dFurnitureId" required>
+                        <option value="">Loading furniture list…</option>
+                    </select>
+                    <p style="font-size:0.8rem;color:#64748b;margin-top:0.4rem;">
+                        Select which 2D catalogue item this 3D model represents.
+                        The 3D model will automatically replace the placeholder box
+                        for that furniture item in the 3D view.
+                    </p>
+                </div>
+
+                <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+                    <div>
+                        <label class="form-label">Width (m)</label>
+                        <input type="number" class="form-input" id="model3dWidth" step="0.01" min="0.01" placeholder="e.g. 0.8" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Depth (m)</label>
+                        <input type="number" class="form-input" id="model3dDepth" step="0.01" min="0.01" placeholder="e.g. 0.8" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Height (m)</label>
+                        <input type="number" class="form-input" id="model3dHeight" step="0.01" min="0.01" placeholder="e.g. 0.9" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">3D Model Source</label>
+                    <!-- Source toggle -->
+                    <div style="display:flex;gap:0;border:1px solid #e2e8f0;border-radius:0.5rem;overflow:hidden;margin-bottom:0.75rem;">
+                        <button type="button" id="srcUploadBtn"
+                            onclick="setModelSource('upload')"
+                            style="flex:1;padding:0.6rem;border:none;font-weight:600;font-size:0.875rem;cursor:pointer;background:#ede9fe;color:#7c3aed;">
+                            📁 Upload File
+                        </button>
+                        <button type="button" id="srcUrlBtn"
+                            onclick="setModelSource('url')"
+                            style="flex:1;padding:0.6rem;border:none;font-weight:600;font-size:0.875rem;cursor:pointer;background:#f8fafc;color:#64748b;">
+                            🔗 Paste URL
+                        </button>
+                    </div>
+
+                    <!-- Upload panel -->
+                    <div id="srcUploadPanel">
+                        <div class="model-upload" onclick="document.getElementById('model3dFile').click()">
+                            <p>🧊 Click to upload .glb or .gltf file</p>
+                            <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">Binary GLB recommended · max 10 MB</p>
+                        </div>
+                        <input type="file" id="model3dFile" accept=".glb,.gltf" style="display:none;">
+                        <div class="model-filename" id="model3dFilename"></div>
+                        <div class="progress-bar-wrap" id="model3dProgressWrap">
+                            <div class="progress-bar" id="model3dProgress"></div>
+                        </div>
+                    </div>
+
+                    <!-- URL panel -->
+                    <div id="srcUrlPanel" style="display:none;">
+                        <input type="url" class="form-input" id="model3dUrl"
+                            placeholder="https://example.com/model.glb"
+                            style="margin-bottom:0.4rem;">
+                        <p style="font-size:0.8rem;color:#64748b;">
+                            Paste a publicly accessible .glb / .gltf URL.
+                            Works with CDNs that allow CORS (e.g. Polyhaven, raw GitHub, etc.).
+                        </p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary-purple" id="addModel3DBtn">Save 3D Model</button>
+            </form>
+        </div>
+
+        <!-- 3D Model List -->
+        <div class="list-card">
+            <h2 class="card-title">Uploaded 3D Models</h2>
+            <div id="model3dList" class="furniture-list">
+                <div class="loading">Loading 3D models…</div>
+            </div>
+        </div>
+
+    </div>
+    </div><!-- end section3d -->
+
+    <script>
+        function switchTab(tab) {
+            document.getElementById('section2d').classList.toggle('active', tab === '2d');
+            document.getElementById('section3d').classList.toggle('active', tab === '3d');
+            document.getElementById('tab2dBtn').classList.toggle('active', tab === '2d');
+            document.getElementById('tab3dBtn').classList.toggle('active', tab === '3d');
+        }
+
+        function setModelSource(mode) {
+            const isUpload = mode === 'upload';
+            document.getElementById('srcUploadPanel').style.display = isUpload ? '' : 'none';
+            document.getElementById('srcUrlPanel').style.display   = isUpload ? 'none' : '';
+            document.getElementById('srcUploadBtn').style.background = isUpload ? '#ede9fe' : '#f8fafc';
+            document.getElementById('srcUploadBtn').style.color     = isUpload ? '#7c3aed' : '#64748b';
+            document.getElementById('srcUrlBtn').style.background   = isUpload ? '#f8fafc' : '#ede9fe';
+            document.getElementById('srcUrlBtn').style.color        = isUpload ? '#64748b' : '#7c3aed';
+            // Store mode for the submit handler to read
+            document.getElementById('addModel3DForm').dataset.sourceMode = mode;
+        }
+
+        // Default to URL mode (works without Firebase Storage/CORS setup)
+        document.addEventListener('DOMContentLoaded', () => setModelSource('url'));
+    </script>
 
     <script type="module" src="js/admin-furniture.js"></script>
 </body>

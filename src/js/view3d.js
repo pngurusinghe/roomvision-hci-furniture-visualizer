@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { db } from './firebase-config.js';
+import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 class Room3DVisualizer {
     constructor() {
@@ -10,26 +13,35 @@ class Room3DVisualizer {
         this.camera = null;
         this.renderer = null;
         this.controls = null;
+        this.gltfLoader = new GLTFLoader();
 
-        // Konva uses pixels, Three.js uses abstract units (let's say 1 unit = 1 meter)
-        // We know from 2D editor: this.scale = 80 pixels per meter.
+        // furnitureId -> { widthM, depthM, heightM, storageUrl }
+        this.models3DMap = {};
+
+        // Konva uses pixels, Three.js uses abstract units.
+        // The 2D editor uses scale = 80 pixels per meter.
         this.pixelToMeterRatio = 1 / 80;
 
         this.init();
     }
 
-    init() {
+    async init() {
         this.loadData();
         if (!this.layoutData) return;
 
         this.setupScene();
         this.buildRoom();
-        this.buildFurniture();
-        this.setupLighting();
 
+        // Fetch the 3D model catalogue from Firestore before building furniture
+        await this.loadModels3D();
+
+        // Build furniture (GLTF models where available, placeholder boxes otherwise)
+        await this.buildFurniture();
+
+        this.setupLighting();
         this.animate();
 
-        // Simulate short loading time to ensure textures/materials are ready, then hide overlay
+        // Hide transition overlay once scene is ready
         setTimeout(() => {
             if (this.overlay) {
                 this.overlay.classList.add('hidden');
@@ -136,56 +148,158 @@ class Room3DVisualizer {
         buildWall(wallThickness, height, length, width / 2 + wallThickness / 2, halfH, 0);
     }
 
-    buildFurniture() {
+    // Load 3D model metadata from Firestore `furniture3d` collection
+    async loadModels3D() {
+        try {
+            const snapshot = await getDocs(collection(db, 'furniture3d'));
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.furnitureId) {
+                    this.models3DMap[data.furnitureId] = {
+                        widthM: data.widthM,
+                        depthM: data.depthM,
+                        heightM: data.heightM,
+                        storageUrl: data.storageUrl
+                    };
+                }
+            });
+            console.log(`Loaded ${Object.keys(this.models3DMap).length} 3D model(s) from Firestore.`);
+        } catch (e) {
+            console.warn('Could not load 3D models from Firestore (falling back to placeholder boxes):', e);
+        }
+    }
+
+    async buildFurniture() {
         const furnitureItems = this.layoutData.furniture;
         if (!furnitureItems || furnitureItems.length === 0) return;
 
-        const roomWidthPx = this.layoutData.roomData.width * 80;
+        const roomWidthPx  = this.layoutData.roomData.width  * 80;
         const roomLengthPx = this.layoutData.roomData.length * 80;
 
-        // In 2D, the room origin (top-left) in Konva coordinates is:
-        const roomTopLeftX = (window.innerWidth - 100 - roomWidthPx) / 2;
-        const roomTopLeftY = (window.innerHeight - 160 - roomLengthPx) / 2;
+        // ---------------------------------------------------------------
+        // BUG FIX: use the room origin that was recorded in the 2D editor
+        // (this.roomGroup.x / y at transition time) instead of recalculating
+        // from window dimensions on the 3D page, which are always different.
+        // ---------------------------------------------------------------
+        const roomTopLeftX = this.layoutData.canvasRoomOriginX;
+        const roomTopLeftY = this.layoutData.canvasRoomOriginY;
 
-        furnitureItems.forEach((item, index) => {
-            // Calculate width and depth in meters based on original image size and scale
-            // The item.originalWidth is pixels.
-            const wMeters = (item.originalWidth * item.scaleX) * this.pixelToMeterRatio;
-            const dMeters = (item.originalHeight * item.scaleY) * this.pixelToMeterRatio;
-            const hMeters = 0.8; // Arbitrary height for placeholder
+        const promises = furnitureItems.map((item, index) =>
+            new Promise((resolve) => {
+                // ---------------------------------------------------------------
+                // PLACEMENT FIX:
+                // item.x / item.y is the Konva GROUP's top-left corner (the group
+                // was placed at x - displayWidth/2, y - displayHeight/2 so its
+                // visual centre sat at the drop point).
+                //
+                // The 3D world uses the CENTRE of an object as its position, so
+                // we must add half the displayed size (in stage pixels, including
+                // the group's own scaleX/scaleY) to get the true centre, then
+                // convert to metres.
+                //
+                // displayWidth/displayHeight = the Konva image's canvas size
+                // (clamped to 120 px) — NOT originalWidth/originalHeight which
+                // are the raw image pixel dimensions and are far too large.
+                // ---------------------------------------------------------------
+                const displayW = item.displayWidth  || item.originalWidth;
+                const displayH = item.displayHeight || item.originalHeight;
 
-            // Map 2D coordinates to 3D
-            // Konva (X, Y) relative to center of the room:
-            const relativeX = item.x - roomTopLeftX - (roomWidthPx / 2);
-            const relativeY = item.y - roomTopLeftY - (roomLengthPx / 2);
+                // Actual displayed size in metres (used for placeholder box & 3D model scaling)
+                const wMeters = displayW * item.scaleX * this.pixelToMeterRatio;
+                const dMeters = displayH * item.scaleY * this.pixelToMeterRatio;
+                const hMeters = 0.8;
 
-            const x3D = relativeX * this.pixelToMeterRatio;
-            const z3D = relativeY * this.pixelToMeterRatio;
-            const y3D = hMeters / 2; // Sit on the floor
+                // Centre of the furniture in stage coordinates
+                const centreStagePx = {
+                    x: item.x + (displayW * item.scaleX) / 2,
+                    y: item.y + (displayH * item.scaleY) / 2,
+                };
 
-            // Placeholder Geometry
-            const geo = new THREE.BoxGeometry(wMeters, hMeters, dMeters);
+                // Convert to room-relative coordinates then to metres
+                const relativeX = centreStagePx.x - roomTopLeftX - (roomWidthPx  / 2);
+                const relativeY = centreStagePx.y - roomTopLeftY - (roomLengthPx / 2);
 
-            // Generate a random distinct color for each furniture box, or use a brand color
-            const colorHue = (index * 137.5) % 360;
-            const mat = new THREE.MeshStandardMaterial({
-                color: new THREE.Color(`hsl(${colorHue}, 70%, 50%)`),
-                roughness: 0.2,
-                metalness: 0.1
-            });
+                const x3D = relativeX * this.pixelToMeterRatio;
+                const z3D = relativeY * this.pixelToMeterRatio;
 
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x3D, y3D, z3D);
+                // Konva rotation (clockwise degrees) → Three.js Y-axis rotation (radians)
+                const rotationY = -THREE.MathUtils.degToRad(item.rotation);
 
-            // Konva rotation is clockwise degrees. Three.js is radians.
-            // Konva rotates around Z axis (2D plane), which corresponds to Y axis in 3D
-            mesh.rotation.y = -THREE.MathUtils.degToRad(item.rotation);
+                const model3D = this.models3DMap[item.furnitureId];
 
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+                if (model3D && model3D.storageUrl) {
+                    // ---- Render uploaded GLB/GLTF model ----
+                    this.gltfLoader.load(
+                        model3D.storageUrl,
+                        (gltf) => {
+                            const modelRoot = gltf.scene;
 
-            this.scene.add(mesh);
+                            // Scale the model to match the admin-specified real-world dimensions
+                            const box = new THREE.Box3().setFromObject(modelRoot);
+                            const size = new THREE.Vector3();
+                            box.getSize(size);
+
+                            if (size.x > 0 && size.y > 0 && size.z > 0) {
+                                const targetW = model3D.widthM  || wMeters;
+                                const targetH = model3D.heightM || hMeters;
+                                const targetD = model3D.depthM  || dMeters;
+                                modelRoot.scale.set(
+                                    targetW / size.x,
+                                    targetH / size.y,
+                                    targetD / size.z
+                                );
+                            }
+
+                            // Sit the model exactly on the floor.
+                            // Re-compute the bounding box after scaling and offset by -min.y
+                            // so the lowest vertex of the mesh is at y=0, regardless of
+                            // where the model's internal pivot/origin sits.
+                            const scaledBox = new THREE.Box3().setFromObject(modelRoot);
+                            modelRoot.position.set(x3D, -scaledBox.min.y, z3D);
+                            modelRoot.rotation.y = rotationY;
+
+                            modelRoot.traverse(child => {
+                                if (child.isMesh) {
+                                    child.castShadow = true;
+                                    child.receiveShadow = true;
+                                }
+                            });
+
+                            this.scene.add(modelRoot);
+                            resolve();
+                        },
+                        undefined,
+                        (err) => {
+                            console.warn(`GLB load failed for "${item.name}", using placeholder:`, err);
+                            this.addPlaceholderBox(item, index, x3D, z3D, wMeters, hMeters, dMeters, rotationY);
+                            resolve();
+                        }
+                    );
+                } else {
+                    // ---- Placeholder coloured box (original behaviour) ----
+                    this.addPlaceholderBox(item, index, x3D, z3D, wMeters, hMeters, dMeters, rotationY);
+                    resolve();
+                }
+            })
+        );
+
+        await Promise.all(promises);
+    }
+
+    addPlaceholderBox(item, index, x3D, z3D, wMeters, hMeters, dMeters, rotationY) {
+        const geo = new THREE.BoxGeometry(wMeters, hMeters, dMeters);
+        const colorHue = (index * 137.5) % 360;
+        const mat = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(`hsl(${colorHue}, 70%, 50%)`),
+            roughness: 0.2,
+            metalness: 0.1
         });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x3D, hMeters / 2, z3D);
+        mesh.rotation.y = rotationY;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        this.scene.add(mesh);
     }
 
     setupLighting() {
