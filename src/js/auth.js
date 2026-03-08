@@ -168,7 +168,7 @@ loginForm.addEventListener("submit", async (e) => {
     } else {
         // Redirect to normal user projects page
         setTimeout(() => {
-            window.location.href = "projects.html";
+            window.location.href = "home.html";
         }, 700);
     }
         

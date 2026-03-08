@@ -35,7 +35,7 @@
     <main class="projects-container">
         <div class="projects-header">
             <h1>Manage Designs</h1>
-            <p class="muted">View and manage all your saved room designs. (Coming soon)</p>
+            <p class="muted">View and manage all your saved room designs.</p>
         </div>
 
         <section class="projects-list" id="designsList" aria-live="polite">
@@ -45,17 +45,11 @@
         </section>
     </main>
 
-    <!-- Firebase auth guard -->
-    <script type="module">
-        import { auth } from './js/firebase-config.js';
-        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    <!-- Konva for 2D Canvas Previews -->
+    <script src="https://unpkg.com/konva@9.2.3/konva.min.js"></script>
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = 'index.html';
-            }
-        });
-    </script>
+    <!-- Script -->
+    <script type="module" src="js/manage-designs.js"></script>
 </body>
 
 </html>

@@ -5,7 +5,7 @@
 
 import { showError, showSuccess, showWarning, showLoading, hideLoading } from './ui-feedback.js';
 import { auth, db } from './firebase-config.js';
-import { collection, addDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { collection, addDoc, doc, updateDoc, getDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 
 // ============================================
@@ -32,15 +32,28 @@ class RoomEditor {
     }
 
     async init() {
-        this.loadRoomData();
+        const urlParams = new URLSearchParams(window.location.search);
+        const designId = urlParams.get('designId');
+
+        if (designId) {
+            await this.loadDesignFromFirestore(designId);
+        } else {
+            this.loadRoomData();
+        }
+
         if (!this.roomData) {
             return;
         }
+
         this.setupCanvas();
         this.drawRoom();
 
-        // Load furniture from cart
-        await this.loadFurnitureFromCart();
+        if (designId && this.savedFurniture) {
+            await this.renderSavedFurniture();
+        } else {
+            // Load furniture from cart
+            await this.loadFurnitureFromCart();
+        }
 
         this.setupViewButtons();
         this.setupZoomControls();
@@ -48,7 +61,6 @@ class RoomEditor {
         this.setupDownloadButton();
         this.setupDeleteButton();
         this.setupCanvasPanning();
-        this.loadSavedLayout();
         this.displayRoomInfo();
 
         setTimeout(() => {
@@ -500,6 +512,7 @@ class RoomEditor {
         }
     }
 
+
     setupSaveButton() {
         const saveBtn = document.getElementById('saveBtn');
         saveBtn.addEventListener('click', () => this.saveLayout());
@@ -678,13 +691,34 @@ class RoomEditor {
 
             console.log('💾 Saving to Firestore...');
 
-            // Save to Firestore
-            const docRef = await addDoc(collection(db, 'designs'), designData);
+            // Check if we are editing an existing design relative to the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const existingId = urlParams.get('designId');
 
-            console.log('✅ Design saved with ID:', docRef.id);
+            let docId = '';
+
+            if (existingId) {
+                // Update the existing document
+                const docRef = doc(db, 'designs', existingId);
+
+                // When updating, we don't overwrite createdAt or userId
+                await updateDoc(docRef, {
+                    room: designData.room,
+                    furniture: designData.furniture,
+                    furnitureCount: designData.furnitureCount,
+                    updatedAt: designData.updatedAt
+                });
+                docId = existingId;
+                console.log('✅ Design updated with ID:', existingId);
+            } else {
+                // Save to Firestore as a new document
+                const docRef = await addDoc(collection(db, 'designs'), designData);
+                docId = docRef.id;
+                console.log('✅ New design saved with ID:', docRef.id);
+            }
 
             // Clear temporary data
-            sessionStorage.setItem('lastSavedDesignId', docRef.id);
+            sessionStorage.setItem('lastSavedDesignId', docId);
             sessionStorage.removeItem('furnitureCart');
             sessionStorage.removeItem('currentRoomLayout');
 
@@ -707,10 +741,114 @@ class RoomEditor {
         }
     }
 
-    loadSavedLayout() {
-        // Skip for now - will be implemented later
-        console.log('Saved layout loading skipped');
+    async loadDesignFromFirestore(designId) {
+        try {
+            showLoading("Loading your design...");
+            const docRef = doc(db, 'designs', designId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                this.roomData = data.room;
+                this.savedFurniture = data.furniture || [];
+                // Update session storage so other tools like 3D view work
+                sessionStorage.setItem('currentRoomData', JSON.stringify(this.roomData));
+            } else {
+                showError("Design not found.");
+                setTimeout(() => window.location.href = 'projects.html', 2000);
+            }
+        } catch (error) {
+            console.error("Error loading design:", error);
+            showError("Failed to load design.");
+        } finally {
+            hideLoading();
+        }
     }
+
+    async renderSavedFurniture() {
+        showLoading("Loading furniture models...");
+        try {
+            // Fetch all furniture to translate IDs to Images
+            const furnitureSnap = await getDocs(collection(db, 'furniture'));
+            const furnitureMap = {};
+            furnitureSnap.forEach(doc => {
+                furnitureMap[doc.id] = { id: doc.id, ...doc.data() };
+            });
+
+            for (const fData of this.savedFurniture) {
+                const item = furnitureMap[fData.furnitureId];
+                if (item) {
+                    await this.addFurnitureWithTransforms(item, fData);
+                }
+            }
+            showSuccess(`Loaded ${this.savedFurniture.length} furniture items!`, 2000);
+        } catch (error) {
+            console.error("Error rendering saved furniture:", error);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async addFurnitureWithTransforms(item, nodeData) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                const maxDisplaySize = 120;
+                const aspectRatio = img.width / img.height;
+                let displayWidth, displayHeight;
+                if (img.width > img.height) {
+                    displayWidth = Math.min(img.width, maxDisplaySize);
+                    displayHeight = displayWidth / aspectRatio;
+                } else {
+                    displayHeight = Math.min(img.height, maxDisplaySize);
+                    displayWidth = displayHeight * aspectRatio;
+                }
+
+                const furnitureImage = new Konva.Image({
+                    x: 0, y: 0,
+                    image: img,
+                    width: displayWidth, height: displayHeight,
+                    shadowColor: 'rgba(0, 0, 0, 0.3)',
+                    shadowBlur: 12, shadowOpacity: 0.6, shadowOffset: { x: 4, y: 4 },
+                    name: 'furniture'
+                });
+
+                furnitureImage.setAttr('furnitureId', item.id);
+                furnitureImage.setAttr('furnitureImage', item.image);
+                furnitureImage.setAttr('furnitureName', item.name);
+                furnitureImage.setAttr('originalWidth', img.width);
+                furnitureImage.setAttr('originalHeight', img.height);
+
+                const label = new Konva.Text({
+                    x: 0, y: displayHeight + 8, width: displayWidth,
+                    text: item.name, fontSize: 12, fontFamily: 'Inter, Arial',
+                    fill: '#1e293b', align: 'center', fontStyle: 'bold'
+                });
+
+                const group = new Konva.Group({
+                    x: nodeData.x,
+                    y: nodeData.y,
+                    rotation: nodeData.rotation || 0,
+                    scaleX: nodeData.scaleX || 1,
+                    scaleY: nodeData.scaleY || 1,
+                    draggable: true
+                });
+
+                group.add(furnitureImage);
+                group.add(label);
+
+                this.setupFurnitureInteractions(group, furnitureImage);
+
+                this.furnitureLayer.add(group);
+                this.furnitureLayer.batchDraw();
+
+                resolve();
+            }
+            img.src = item.image;
+        });
+    }
+
 
     displayRoomInfo() {
         const roomDimEl = document.getElementById('roomDimensions');

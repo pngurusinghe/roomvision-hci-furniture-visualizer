@@ -51,13 +51,13 @@ async function loadProjectDetails() {
     try {
         const projectRef = doc(db, 'projects', currentProjectId);
         const projectSnap = await getDoc(projectRef);
-        
+
         if (!projectSnap.exists()) {
             alert('Project not found');
             window.location.href = 'projects.html';
             return;
         }
-        
+
         const data = projectSnap.data();
         projectTitle.textContent = data.title || 'Untitled Project';
         projectDesc.textContent = data.description || 'No description';
@@ -70,13 +70,13 @@ async function loadProjectDetails() {
 // Load rooms in the project (real-time)
 function loadRooms() {
     if (unsubscribe) unsubscribe();
-    
+
     const q = query(
         collection(db, `projects/${currentProjectId}/rooms`),
         where('userId', '==', currentUser.uid)
         // Removed orderBy - no index needed for simple filtered query
     );
-    
+
     unsubscribe = onSnapshot(q, (snapshot) => {
         const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log('📚 Rooms loaded:', rooms.length, 'rooms in project', currentProjectId);
@@ -90,14 +90,14 @@ function loadRooms() {
 // Render rooms as cards
 function renderRooms(rooms) {
     roomsList.innerHTML = '';
-    
+
     // Update room count dynamically
     const roomCountEl = document.getElementById('roomCount');
     if (roomCountEl) {
         const count = rooms.length;
         roomCountEl.textContent = `${count} room${count !== 1 ? 's' : ''}`;
     }
-    
+
     if (!rooms.length) {
         roomsList.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #9ca3af;">
@@ -106,16 +106,16 @@ function renderRooms(rooms) {
         `;
         return;
     }
-    
+
     rooms.forEach(room => {
         const card = document.createElement('div');
         card.className = 'room-card';
-        
+
         const roomName = room.roomType ? room.roomType.replace('-', ' ').toUpperCase() : 'Room';
         const dimensions = `${room.width || '?'} x ${room.length || '?'} m`;
         const area = room.area ? `${room.area.toFixed(1)} m²` : 'N/A';
         const isDraft = room.isDraft ? ' (Draft)' : '';
-        
+
         card.innerHTML = `
             <h3>${escapeHtml(roomName)}${isDraft}</h3>
             <div class="room-meta">
@@ -127,7 +127,7 @@ function renderRooms(rooms) {
         `;
         roomsList.appendChild(card);
     });
-    
+
     // No action buttons for now - rooms are view-only
 }
 
