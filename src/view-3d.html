@@ -189,6 +189,61 @@
             display: flex;
             gap: 1rem;
         }
+
+        /* 3D Rotation panel (Phase 4) */
+        .rotation-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 200;
+            display: none;
+            /* shown by JS when an object is selected */
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: 160px;
+        }
+
+        .rotation-panel h4 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .rotation-panel .angle-badge {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .rotation-panel .btn-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .rotation-panel button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            background: var(--primary);
+            color: white;
+            transition: background 0.15s;
+        }
+
+        .rotation-panel button:hover {
+            background: var(--primary-dark);
+        }
     </style>
 
     <!-- Import Maps Polyfill -->
@@ -201,6 +256,19 @@
           "three/addons/": "https://unpkg.com/three@0.155.0/examples/jsm/"
         }
       }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#3b82f6", 600: "#2563eb", 900: "#1e3a8a" },
+                        accent: { 500: "#8b5cf6", 600: "#7c3aed" }
+                    }
+                }
+            }
+        }
     </script>
 </head>
 
@@ -219,23 +287,80 @@
         <div class="transition-text">Rendering 3D Environment...</div>
     </div>
 
-    <div class="top-toolbar">
-        <div class="logo">
-            🧊 RoomVision 3D
+    <nav
+        class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-50 shadow-sm transition-all antialiased">
+        <div class="flex items-center gap-6">
+            <button onclick="window.location.href='home.html'"
+                class="flex items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity focus:outline-none">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-md">
+                    <svg class="w-5 h-5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                    </svg>
+                </div>
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-accent-600">RoomVision</span>
+            </button>
+            <div class="w-px h-6 bg-slate-200"></div>
+
+            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 shadow-inner">
+                <span
+                    class="px-3 py-1.5 text-sm font-bold rounded-md bg-white text-brand-600 shadow-sm ring-1 ring-slate-200">🧊
+                    3D View</span>
+            </div>
         </div>
-        <div class="toolbar-right">
-            <button class="btn btn-secondary" onclick="window.location.href='editor-2d.html'">
+
+        <div class="flex items-center gap-3">
+            <button
+                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-brand-600 transition-all shadow-sm"
+                id="backTo2DBtn">
                 ← Back to 2D Editor
             </button>
+            <div class="w-px h-6 bg-slate-200 mx-2"></div>
+            <button
+                class="px-3 py-1.5 text-sm font-semibold text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                id="logoutBtn"
+                onclick="const auth = window.firebaseAuth || window.firebase?.auth(); if(auth) auth.signOut().then(() => { window.location.href = 'index.html'; });">
+                Logout
+            </button>
         </div>
-    </div>
+    </nav>
+    <script>
+        // Set up back button ASAP (before view3d.js loads) so it always works
+        document.getElementById('backTo2DBtn').addEventListener('click', () => {
+            try {
+                const layoutStr = sessionStorage.getItem('current3DLayout');
+                if (layoutStr) {
+                    const layout = JSON.parse(layoutStr);
+                    if (layout.projectId && layout.roomId) {
+                        window.location.href = `editor-2d.html?projectId=${layout.projectId}&roomId=${layout.roomId}`;
+                        return;
+                    }
+                }
+            } catch (e) { }
+            window.location.href = 'editor-2d.html';
+        });
+    </script>
 
     <div id="three-container"></div>
+
+    <!-- Phase 4: Rotation panel -->
+    <div class="rotation-panel" id="rotationPanel">
+        <h4>🔄 Rotate Object</h4>
+        <div class="angle-badge" id="rotationAngle">0°</div>
+        <div class="btn-row">
+            <button id="rotateLeftBtn" title="Rotate 15° counter-clockwise">↺ Left</button>
+            <button id="rotateRightBtn" title="Rotate 15° clockwise">Right ↻</button>
+        </div>
+    </div>
 
     <div class="controls-hint">
         <span>🖱️ <strong>Left Click + Drag:</strong> Rotate</span>
         <span>🖱️ <strong>Right Click + Drag:</strong> Pan</span>
         <span>🖱️ <strong>Scroll:</strong> Zoom</span>
+        <span>🖱️ <strong>Click object:</strong> Select to rotate</span>
     </div>
 
     <script type="module" src="js/view3d.js"></script>

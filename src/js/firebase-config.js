@@ -20,3 +20,17 @@ export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true
 });
 export const storage = getStorage(app);
+
+// Global logout handler for user-facing pages
+import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+document.addEventListener('click', async (e) => {
+  if (e.target && e.target.id === 'logoutBtn') {
+    try {
+      await signOut(auth);
+      window.location.href = 'index.html';
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to logout. Please try again.');
+    }
+  }
+});

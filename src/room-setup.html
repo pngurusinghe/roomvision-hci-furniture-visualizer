@@ -6,55 +6,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Setup - RoomVision</title>
     <link rel="stylesheet" href="../css/room.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#3b82f6", 600: "#2563eb", 900: "#1e3a8a" },
+                        accent: { 500: "#8b5cf6", 600: "#7c3aed" }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 
 <body>
     <!-- Navigation Header -->
-    <header class="app-header">
-        <div class="header-container">
-            <div class="header-left">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                            <defs>
-                                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
-                                </linearGradient>
-                            </defs>
-                            <rect width="40" height="40" rx="10" fill="url(#logoGradient)" />
-                            <path d="M20 12L27 18H24V26H16V18H13L20 12Z" fill="white" />
-                            <circle cx="20" cy="32" r="2" fill="white" opacity="0.6" />
+    <nav
+        class="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 z-50 shadow-sm transition-all antialiased">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <button onclick="window.location.href='home.html'"
+                    class="flex items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity focus:outline-none">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-md">
+                        <svg class="w-5 h-5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
                         </svg>
                     </div>
-                    <span class="logo-text">RoomVision</span>
-                    <span class="stats-badge">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                            <path d="M6 1l1.5 3 3.5.5-2.5 2.5.5 3.5L6 9l-3 1.5.5-3.5L1 4.5l3.5-.5z" />
-                        </svg>
-                        Beta
-                    </span>
+                    <span
+                        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-accent-600">RoomVision</span>
+                </button>
+                <div class="w-px h-6 bg-slate-200 mx-1"></div>
+
+                <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 shadow-inner">
+                    <a href="room-setup.html"
+                        class="px-4 py-1.5 text-sm font-semibold rounded-md bg-white text-brand-600 shadow-sm ring-1 ring-slate-200 transition-all">Room
+                        Setup</a>
+                    <a href="editor-2d.html"
+                        class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">2D
+                        Editor</a>
+                    <a href="view-3d.html"
+                        class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">3D
+                        View</a>
                 </div>
             </div>
-            <nav class="header-nav">
-                <a href="room-setup.html" class="nav-link active"><span>Room Setup</span></a>
-                <a href="editor-2d.html" class="nav-link"><span>2D Editor</span></a>
-                <a href="view-3d.html" class="nav-link"><span>3D View</span></a>
-                <a href="manage-designs.html" class="nav-link"><span>Save & Manage</span></a>
-            </nav>
-            <div class="header-right">
-                <div class="theme-toggle-wrapper">
-                    <span class="theme-label">Theme</span>
-                    <div class="theme-toggle" id="themeToggle">
-                        <div class="theme-toggle-slider"></div>
-                    </div>
-                </div>
-                <div class="user-info" id="userInfo">
-                    <a href="projects.html" class="my-projects-btn" title="Back to My Projects">📁 My Projects</a>
-                </div>
+
+            <div class="flex items-center gap-3">
+                <button
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 hover:bg-slate-50 hover:text-brand-600 transition-all shadow-sm"
+                    onclick="window.location.href='projects.html'">
+                    📁 My Projects
+                </button>
+                <div class="w-px h-6 bg-slate-200 mx-2"></div>
+                <button
+                    class="px-3 py-1.5 text-sm font-semibold text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                    id="logoutBtn"
+                    onclick="const auth = window.firebaseAuth || window.firebase?.auth(); if(auth) auth.signOut().then(() => { window.location.href = 'index.html'; });">
+                    Logout
+                </button>
             </div>
-        </div>
-    </header>
+    </nav>
 
     <main class="room-setup-container">
         <!-- Breadcrumb -->
@@ -435,8 +450,11 @@
                 // User not logged in, redirect to login
                 window.location.href = 'index.html';
             } else {
-                // Display user name (prefer displayName)
-                document.getElementById('userName').textContent = user.displayName || user.email || 'User';
+                // Display user name (prefer displayName) - only if element exists
+                const userNameElement = document.getElementById('userName');
+                if (userNameElement) {
+                    userNameElement.textContent = user.displayName || user.email || 'User';
+                }
             }
         });
 
