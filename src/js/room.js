@@ -555,11 +555,11 @@ function handleBackClick() {
         return;
     }
     
-    // If part of a project, go back to project details; otherwise go to manage designs
+    // If part of a project, go back to project details; otherwise go to projects list
     if (roomState.projectId) {
         window.location.href = `project-details.html?projectId=${roomState.projectId}`;
     } else {
-        window.location.href = 'manage-designs.html';
+        window.location.href = 'projects.html';
     }
 }
 
