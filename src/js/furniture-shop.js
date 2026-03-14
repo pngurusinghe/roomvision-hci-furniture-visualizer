@@ -300,8 +300,22 @@ window.viewInRoom = function() {
     console.log('🛒 Cart being saved:', cart);
     showSuccess('Loading your room with selected furniture...');
     
+    let url = 'editor-2d.html';
+    try {
+        const roomDataStr = sessionStorage.getItem('currentRoomData');
+        const roomId = sessionStorage.getItem('currentRoomId');
+        if (roomDataStr && roomId) {
+            const roomData = JSON.parse(roomDataStr);
+            if (roomData.projectId) {
+                url += `?projectId=${roomData.projectId}&roomId=${roomId}`;
+            } else {
+                url += `?roomId=${roomId}`;
+            }
+        }
+    } catch(e) {}
+
     setTimeout(() => {
-        window.location.href = 'editor-2d.html';
+        window.location.href = url;
     }, 1000);
 };
 

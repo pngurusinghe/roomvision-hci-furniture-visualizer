@@ -113,6 +113,7 @@ body {
     background: var(--border);
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .zoom-slider::-webkit-slider-thumb {
@@ -376,16 +377,19 @@ body {
         </div>
 
         <div class="toolbar-right">
-            <button class="btn btn-secondary" onclick="window.location.href='furniture-shop.html'">
+            <button class="btn btn-secondary" id="addFurnitureBtn">
                 🛒 Add More Furniture
             </button>
-            <button class="btn btn-secondary" onclick="window.location.href='room-setup.html'">
+            <button class="btn btn-secondary" id="backToRoomBtn">
                 ← Back to Room
             </button>
              <!-- Add Download Button -->
-    <button class="btn btn-secondary" id="downloadBtn">
-        📥 Download
-    </button>
+            <button class="btn btn-secondary" id="downloadBtn">
+                📥 Download
+            </button>
+            <button class="btn btn-primary" id="view3dBtn" style="background:var(--success); border-color:var(--success);">
+                👁️ View in 3D
+            </button>
             <button class="btn btn-primary" id="saveBtn">
                 💾 Save Layout
             </button>

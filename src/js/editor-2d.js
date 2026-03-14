@@ -83,32 +83,37 @@ class RoomEditor2D {
     async loadState() {
         // 1. Session State Recovery
         let hasSessionState = false;
+        
+        // Step A: Recover IDs if they were not provided in the URL
+        if (!this.roomId) {
+            const tempRoomId = sessionStorage.getItem('currentRoomId');
+            if (tempRoomId) {
+                this.roomId = tempRoomId;
+                const tempRoomData = sessionStorage.getItem('currentRoomData');
+                if (tempRoomData) {
+                    try {
+                        const parsed = JSON.parse(tempRoomData);
+                        if (!this.projectId && parsed.projectId) {
+                            this.projectId = parsed.projectId;
+                        }
+                    } catch(e){}
+                }
+            }
+        }
+
+        // Step B: Attempt to pull 3D layout only if it matches our resolved IDs
         try {
-            // Try 3D layout first (from view3d)
             const sessionRaw = sessionStorage.getItem('current3DLayout');
             if (sessionRaw) {
                 const layout = JSON.parse(sessionRaw);
+                // If we still don't have IDs, fall back to layout
                 if (!this.projectId && layout.projectId) this.projectId = layout.projectId;
                 if (!this.roomId && layout.roomId) this.roomId = layout.roomId;
                 
-                if (layout.furniture && layout.furniture.length > 0) {
+                // Only recover the layout's furniture if it belongs to the room we're loading
+                if (this.roomId === layout.roomId && layout.furniture && layout.furniture.length > 0) {
                     this.furnitureState = layout.furniture;
                     hasSessionState = true;
-                }
-            } else {
-                // Flash recovery: we might be coming directly from room-setup or shop
-                const tempRoomId = sessionStorage.getItem('currentRoomId');
-                const tempRoomData = sessionStorage.getItem('currentRoomData');
-                if (tempRoomId) {
-                    if (!this.roomId) this.roomId = tempRoomId;
-                    if (tempRoomData) {
-                        try {
-                            const parsed = JSON.parse(tempRoomData);
-                            if (!this.projectId && parsed.projectId) {
-                                this.projectId = parsed.projectId;
-                            }
-                        } catch(e){}
-                    }
                 }
             }
         } catch (e) {
@@ -550,6 +555,24 @@ class RoomEditor2D {
         const saveBtn = document.getElementById('saveBtn');
         if (saveBtn) {
             saveBtn.addEventListener('click', () => this.saveLayout());
+        }
+
+        const addFurnitureBtn = document.getElementById('addFurnitureBtn');
+        if (addFurnitureBtn) {
+            addFurnitureBtn.addEventListener('click', () => this.navigateToShop());
+        }
+
+        const backToRoomBtn = document.getElementById('backToRoomBtn');
+        if (backToRoomBtn) {
+            backToRoomBtn.addEventListener('click', () => {
+                if (this.projectId && this.roomId) {
+                    window.location.href = `room-setup.html?projectId=${this.projectId}&roomId=${this.roomId}`;
+                } else if (this.roomId) {
+                    window.location.href = `room-setup.html?roomId=${this.roomId}`;
+                } else {
+                    window.location.href = 'room-setup.html';
+                }
+            });
         }
 
         // Keyboard Deletion of elements from the shared state
