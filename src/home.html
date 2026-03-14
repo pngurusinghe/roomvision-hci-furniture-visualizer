@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RoomVision - Visualize Your Dream Space</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #2563eb;
@@ -519,6 +522,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -530,6 +534,7 @@
                 opacity: 0;
                 transform: translateX(50px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -565,27 +570,67 @@
             }
         }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#3b82f6", 600: "#2563eb", 900: "#1e3a8a" },
+                        accent: { 500: "#8b5cf6", 600: "#7c3aed" }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
+
 <body>
     <!-- Navigation -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <div class="logo">RoomVision</div>
-            
-            <div class="nav-links">
-                <a href="#features" class="nav-link">Features</a>
-                <a href="#about" class="nav-link">About</a>
-                <a href="#mission" class="nav-link">Mission</a>
-                <a href="projects.html" class="nav-link">My Projects</a>
+    <nav class="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 z-50 shadow-sm transition-all antialiased"
+        id="navbar">
+        <div class="flex items-center gap-8">
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+                class="flex items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity focus:outline-none">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-md">
+                    <svg class="w-5 h-5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                    </svg>
+                </div>
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-accent-600 tracking-tight">RoomVision</span>
+            </button>
+            <div class="hidden md:block w-px h-6 bg-slate-200 mx-1"></div>
+
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#features"
+                    class="text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">Features</a>
+                <a href="#about"
+                    class="text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">About</a>
+                <a href="#mission"
+                    class="text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">Mission</a>
+                <a href="projects.html"
+                    class="text-sm font-bold text-brand-600 hover:text-brand-700 transition-colors relative after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-0.5 after:bg-brand-600 after:rounded-full">My
+                    Projects</a>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-full pl-1.5 pr-4 py-1.5 shadow-sm cursor-pointer hover:bg-slate-100 transition-all focus-within:ring-2 focus-within:ring-brand-500/20"
+                id="profileBtn">
+                <div class="w-7 h-7 flex items-center justify-center bg-gradient-to-br from-brand-100 to-accent-100 text-brand-700 rounded-full font-bold text-xs shadow-inner border border-brand-200"
+                    id="profileAvatar">U</div>
+                <span class="text-sm font-semibold text-slate-700" id="userName">User</span>
             </div>
 
-            <div class="profile-section">
-                <div class="profile-btn" id="profileBtn">
-                    <div class="profile-avatar" id="profileAvatar">U</div>
-                    <span id="userName">User</span>
-                </div>
-                <button class="logout-btn" id="logoutBtn">Logout</button>
-            </div>
+            <button
+                class="px-4 py-1.5 text-sm font-semibold text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                id="logoutBtn">
+                Logout
+            </button>
         </div>
     </nav>
 
@@ -594,13 +639,15 @@
         <div class="hero-content">
             <div class="hero-text">
                 <h1>Design Your <span class="gradient-text">Dream Space</span> in Minutes</h1>
-                <p>Transform your ideas into stunning 2D and 3D room visualizations. Professional furniture planning made simple and intuitive.</p>
-                
+                <p>Transform your ideas into stunning 2D and 3D room visualizations. Professional furniture planning
+                    made simple and intuitive.</p>
+
                 <div class="cta-buttons">
                     <button class="btn-primary" onclick="window.location.href='projects.html'">
                         Start Your Project →
                     </button>
-                    <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">
+                    <button class="btn-secondary"
+                        onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">
                         Explore Features
                     </button>
                 </div>
@@ -717,8 +764,10 @@
         <div class="footer-content">
             <div class="footer-section" id="about">
                 <h3>About RoomVision</h3>
-                <p>RoomVision is a professional room design and visualization platform that empowers designers, homeowners, and businesses to create stunning interior spaces with ease.</p>
-                <p style="margin-top: 1rem;">Founded in 2024, we're committed to making interior design accessible to everyone.</p>
+                <p>RoomVision is a professional room design and visualization platform that empowers designers,
+                    homeowners, and businesses to create stunning interior spaces with ease.</p>
+                <p style="margin-top: 1rem;">Founded in 2024, we're committed to making interior design accessible to
+                    everyone.</p>
             </div>
 
             <div class="footer-section">
@@ -733,7 +782,8 @@
 
             <div class="footer-section" id="mission">
                 <h3>Our Mission</h3>
-                <p>To democratize interior design by providing powerful, intuitive tools that help anyone create beautiful, functional spaces.</p>
+                <p>To democratize interior design by providing powerful, intuitive tools that help anyone create
+                    beautiful, functional spaces.</p>
             </div>
 
             <div class="footer-section">
@@ -747,10 +797,11 @@
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2024 RoomVision. All rights reserved. | Privacy Policy | Terms of Service</p>
+            <p>&copy; 2026 RoomVision. All rights reserved. | Privacy Policy | Terms of Service</p>
         </div>
     </footer>
 
     <script type="module" src="js/home.js"></script>
 </body>
+
 </html>

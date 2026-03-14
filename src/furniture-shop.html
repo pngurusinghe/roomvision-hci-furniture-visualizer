@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Furniture Shop - RoomVision</title>
-    <link rel="stylesheet" href="/css/room.css">
+    <link rel="stylesheet" href="../css/room.css">
     <style>
         :root {
             --primary: #2563eb;
@@ -37,7 +38,7 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .header-container {
@@ -139,7 +140,7 @@
             border-radius: 0.75rem;
             padding: 1.5rem;
             margin-bottom: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .filter-title {
@@ -207,14 +208,14 @@
             background: white;
             border-radius: 0.75rem;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: all 0.3s;
             cursor: pointer;
         }
 
         .product-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
         }
 
         .product-image {
@@ -313,7 +314,7 @@
             width: 400px;
             height: 100vh;
             background: white;
-            box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
             transition: right 0.3s ease;
             z-index: 1000;
             display: flex;
@@ -442,7 +443,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 999;
             display: none;
         }
@@ -452,108 +453,160 @@
         }
 
         .header-nav {
-    display: flex;
-    gap: 0.5rem;
-}
+            display: flex;
+            gap: 0.5rem;
+        }
 
-.nav-link {
-    padding: 0.5rem 1rem;
-    text-decoration: none;
-    color: #64748b;
-    border-radius: 0.375rem;
-    transition: all 0.2s;
-    font-weight: 500;
-}
+        .nav-link {
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: #64748b;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
 
-.nav-link:hover {
-    background: #f1f5f9;
-    color: #2563eb;
-}
+        .nav-link:hover {
+            background: #f1f5f9;
+            color: #2563eb;
+        }
 
-.nav-link.active {
-    background: #0c1832;
-    color: rgb(205, 11, 11);
-}
+        .nav-link.active {
+            background: #0c1832;
+            color: rgb(205, 11, 11);
+        }
 
-.search-bar {
-    display: flex;
-    align-items: center;   /* (also fix: right is invalid here) */
-    width: 500px;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    margin-top: 1.5rem;
-    margin-right: 1.5rem;
+        .search-bar {
+            display: flex;
+            align-items: center;
+            /* (also fix: right is invalid here) */
+            width: 500px;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 1.5rem;
+            margin-right: 1.5rem;
 
-    margin-left: auto;    /* ✅ push to right */
-}
+            margin-left: auto;
+            /* ✅ push to right */
+        }
 
-.search-input {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-}
+        .search-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
 
-.search-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
 
-.search-btn {
-    padding: 0.75rem 1.5rem;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-
-
-
-
+        .search-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#3b82f6", 600: "#2563eb", 900: "#1e3a8a" },
+                        accent: { 500: "#8b5cf6", 600: "#7c3aed" }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <!-- Header -->
-   <header class="app-header">
-    <div class="header-container">
-        <div class="logo">
-            🏠 RoomVision
-        </div>
-        
-        <!-- Navigation -->
-        <nav class="header-nav">
-            <a href="room-setup.html" class="nav-link"><span>Room Setup</span></a>
-            <a href="furniture-shop.html" class="nav-link active"><span>Furniture Shop</span></a>
-            <a href="editor-2d.html" class="nav-link"><span>2D Editor</span></a>
-            <a href="view-3d.html" class="nav-link"><span>3D View</span></a>
-            <a href="manage-designs.html" class="nav-link"><span>My Designs</span></a>
-        </nav>
-        
-        <div class="header-actions">
-            <button class="btn btn-outline" onclick="window.location.href='editor-2d.html'">
-                🎨 Go to Editor
-            </button>
-            <button class="btn btn-primary cart-badge" id="cartToggle">
-                🛒 Cart
-                <span class="cart-count" id="cartCount">0</span>
-            </button>
-        </div>
-    </div>
-</header>
- <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search furniture..." class="search-input">
-    <button class="search-btn" onclick="searchFurniture()">🔍 Search</button>
-</div>
 
+<body>
+    <!-- Navigation Header -->
+    <nav
+        class="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 z-50 shadow-sm transition-all antialiased">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <button onclick="window.location.href='home.html'"
+                    class="flex items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity focus:outline-none">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-md">
+                        <svg class="w-5 h-5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <span
+                        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-accent-600">RoomVision</span>
+                </button>
+                <div class="w-px h-6 bg-slate-200 mx-1"></div>
+
+                <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 shadow-inner">
+                    <a href="room-setup.html"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">Room
+                        Setup</a>
+                    <a href="furniture-shop.html"
+                        class="px-3 py-1.5 text-sm font-semibold rounded-md bg-white text-brand-600 shadow-sm ring-1 ring-slate-200 transition-all">Shop</a>
+                    <a href="editor-2d.html"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">2D
+                        Editor</a>
+                    <a href="view-3d.html"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">3D
+                        View</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="relative flex items-center w-72">
+                    <input type="text" id="searchInput" placeholder="Search furniture..."
+                        class="w-full pl-4 pr-10 py-1.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-shadow">
+                    <button class="absolute right-2 text-slate-400 hover:text-brand-600 transition-colors"
+                        onclick="searchFurniture()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="w-px h-6 bg-slate-200 mx-2"></div>
+                <button
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 hover:bg-slate-50 hover:text-brand-600 transition-all shadow-sm"
+                    onclick="window.location.href='editor-2d.html'">
+                    <span class="text-base">🎨</span> Editor
+                </button>
+                <button
+                    class="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 border border-brand-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/50 hover:from-brand-500 hover:to-brand-400 hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md shadow-brand-500/20 relative"
+                    id="cartToggle">
+                    <span class="text-base drop-shadow-sm">🛒</span> Cart
+                    <span
+                        class="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full shadow-md transform scale-0 transition-transform duration-300"
+                        id="cartCount">0</span>
+                </button>
+                <div class="w-px h-6 bg-slate-200 mx-2"></div>
+                <button
+                    class="px-3 py-1.5 text-sm font-semibold text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                    id="logoutBtn"
+                    onclick="const auth = window.firebaseAuth || window.firebase?.auth(); if(auth) auth.signOut().then(() => { window.location.href = 'index.html'; });">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+    <div class="h-16"></div> <!-- Spacer for fixed nav -->
     <!-- Main Container -->
     <div class="main-container">
 
-       
+
         <!-- Filters Sidebar -->
         <aside class="filters-sidebar">
             <div class="filter-card">
@@ -636,4 +689,5 @@
 
     <script type="module" src="js/furniture-shop.js"></script>
 </body>
+
 </html>
