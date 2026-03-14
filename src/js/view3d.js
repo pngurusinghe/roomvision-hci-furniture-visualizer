@@ -180,6 +180,13 @@ class Room3DVisualizer {
     /** Small decor that should rest on top of a table / desk / shelf surface. */
     _isTableTopDecor(name) {
         const nameLower = name.toLowerCase();
+        
+        // Prevent large furniture from accidentally triggering decor rules (e.g. "Display Cabinet")
+        const largeExclusions = ['cabinet', 'shelf', 'stand', 'unit', 'table', 'desk', 'dresser'];
+        if (largeExclusions.some(ex => nameLower.includes(ex))) {
+            return false;
+        }
+
         const kw = [
             'vase', 'clock', 'alarm', 'chess', 'candle', 'figurine',
             'bowl', 'plant', 'lamp', 'book', 'statue', 'ornament',
@@ -518,10 +525,13 @@ class Room3DVisualizer {
     // ── Enhanced Phase 4: Selection, Movement & Rotation ──────────────────────────────────────
     
     setupSelectionAndMovement() {
+        this.isMouseDown = false;
+        
         // Mouse events for object selection and movement
         this.renderer.domElement.addEventListener('mousedown', (event) => this.onMouseDown(event));
         this.renderer.domElement.addEventListener('mousemove', (event) => this.onMouseMove(event));
         this.renderer.domElement.addEventListener('mouseup', (event) => this.onMouseUp(event));
+        window.addEventListener('mouseup', (event) => this.onMouseUp(event));
         
         // Mouse hover effects for better UX
         this.renderer.domElement.addEventListener('mousemove', (event) => this.updateCursor(event));
@@ -533,8 +543,9 @@ class Room3DVisualizer {
     }
     
     onMouseDown(event) {
-        event.preventDefault();
+        if (event.button !== 0) return; // Only accept left clicks
         this._isDragging = false;
+        this.isMouseDown = true;
         
         const rect = this.renderer.domElement.getBoundingClientRect();
         const mouse = new THREE.Vector2(
@@ -587,13 +598,14 @@ class Room3DVisualizer {
     }
     
     setupDragOperation(object, intersectionPoint) {
-        // Calculate drag offset
+        // Calculate drag offset relative to the object origin
         this.dragOffset.copy(intersectionPoint).sub(object.position);
         
-        // Create drag plane at object height, parallel to ground
+        // INDUSTRY STANDARD: Create drag plane through the exact intersection point
+        // to prevent parallax shifting and erratic Z/Y values when the camera angle is shallow.
         this.dragPlane.setFromNormalAndCoplanarPoint(
             new THREE.Vector3(0, 1, 0),
-            object.position
+            intersectionPoint
         );
         
         // Create visual helper for movement
@@ -601,7 +613,8 @@ class Room3DVisualizer {
     }
     
     onMouseMove(event) {
-        if (!this.selectedObject) return;
+        // Only drag if the mouse is explicitly held down and we have a selection
+        if (!this.selectedObject || !this.isMouseDown) return;
         
         this._isDragging = true;
         
@@ -615,7 +628,7 @@ class Room3DVisualizer {
         
         // Calculate new position based on drag plane intersection
         if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
-            const newPosition = this.dragIntersection.sub(this.dragOffset);
+            const newPosition = this.dragIntersection.clone().sub(this.dragOffset);
             
             // Apply boundary constraints (keep within room)
             const room = this.layoutData.roomData;
@@ -637,6 +650,10 @@ class Room3DVisualizer {
             // Update object position with snapping
             this.selectedObject.position.set(newPosition.x, snappedY, newPosition.z);
             
+            if (this.highlightHelper && this.highlightHelper.visible) {
+                this.highlightHelper.update();
+            }
+            
             // Update move helper
             if (this.moveHelper) {
                 this.moveHelper.position.copy(this.selectedObject.position);
@@ -651,6 +668,9 @@ class Room3DVisualizer {
     }
     
     onMouseUp(event) {
+        if (event.button !== 0 && event.type !== 'mouseleave') return;
+        this.isMouseDown = false;
+
         if (this.isDraggingObject && this.selectedObject) {
             // Finalize move operation
             this.finalizeMoveOperation();
@@ -669,16 +689,16 @@ class Room3DVisualizer {
     calculateSnappedHeight(x, z, itemName, object) {
         // Get bounding box for proper height calculation
         const box = new THREE.Box3().setFromObject(object);
-        const itemHeight = box.max.y - box.min.y;
+        const localMinY = box.min.y - object.position.y;
         
         if (this._isWallArt(itemName)) {
             const wp = this._getWallPlacement(x, z);
             return wp.y;
         } else if (this._isTableTopDecor(itemName)) {
             const surfaceY = this._findSurfaceHeightBelow(x, z);
-            return surfaceY + (-box.min.y); // Place bottom of object on surface
+            return surfaceY - localMinY; // Place bottom of object on surface
         } else {
-            return -box.min.y; // Place on floor
+            return -localMinY; // Place on floor
         }
     }
     
@@ -726,16 +746,13 @@ class Room3DVisualizer {
         const centreRelativeXPx = relativeX + (roomWidthPx / 2);
         const centreRelativeYPx = relativeY + (roomLengthPx / 2);
         
-        // Update furniture position (accounting for object center to top-left conversion)
-        const displayW = furniture.displayWidth || furniture.originalWidth;
-        const displayH = furniture.displayHeight || furniture.originalHeight;
-        
-        furniture.x = centreRelativeXPx - (displayW * furniture.scaleX) / 2;
-        furniture.y = centreRelativeYPx - (displayH * furniture.scaleY) / 2;
+        // Update furniture position (the 2D editor uses object center relative to top-left of room)
+        furniture.x = centreRelativeXPx;
+        furniture.y = centreRelativeYPx;
         
         // Update session storage so 2D editor stays in sync
         this.layoutData.furnitureItems = this.layoutData.furniture;
-        sessionStorage.setItem('currentLayout', JSON.stringify(this.layoutData));
+        sessionStorage.setItem('current3DLayout', JSON.stringify(this.layoutData));
         
         console.log(`💾 Updated furniture position: (${furniture.x.toFixed(1)}, ${furniture.y.toFixed(1)})`);
     }
@@ -789,18 +806,18 @@ class Room3DVisualizer {
     }
 
     _setHighlight(obj, on) {
-        obj.traverse(child => {
-            if (child.isMesh && child.material) {
-                if (on) {
-                    child.userData.savedEmissive = child.material.emissive?.clone();
-                    if (child.material.emissive) child.material.emissive.set(0xff6600);
-                } else {
-                    if (child.material.emissive && child.userData.savedEmissive) {
-                        child.material.emissive.copy(child.userData.savedEmissive);
-                    }
-                }
-            }
-        });
+        if (!this.highlightHelper) {
+            this.highlightHelper = new THREE.BoxHelper(new THREE.Mesh(), 0xff6600);
+            this.highlightHelper.material.depthTest = false;
+            this.scene.add(this.highlightHelper);
+        }
+        
+        if (on && obj) {
+            this.highlightHelper.setFromObject(obj);
+            this.highlightHelper.visible = true;
+        } else {
+            this.highlightHelper.visible = false;
+        }
     }
 
     rotateSelected(deltaDeg) {
@@ -808,6 +825,10 @@ class Room3DVisualizer {
 
         const deltaRad = THREE.MathUtils.degToRad(deltaDeg);
         this.selectedObject.rotation.y += deltaRad;
+
+        if (this.highlightHelper && this.highlightHelper.visible) {
+            this.highlightHelper.update();
+        }
 
         // Accumulate delta for sessionStorage sync
         const idx = this.selectedIndex;

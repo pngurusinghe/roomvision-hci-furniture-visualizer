@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 110" width="70" height="110">
+  <rect x="4" y="4" width="62" height="102" rx="4" fill="#6B4C3B" stroke="#3D2416" stroke-width="2"/>
+  <line x1="4" y1="55" x2="66" y2="55" stroke="#3D2416" stroke-width="1.5"/>
+  <rect x="12" y="18" width="46" height="32" rx="2" fill="#7A5A47"/>
+  <rect x="12" y="62" width="46" height="36" rx="2" fill="#7A5A47"/>
+  <circle cx="35" cy="34" r="3" fill="#C8B040"/>
+  <circle cx="35" cy="80" r="3" fill="#C8B040"/>
+  <text x="35" y="58" font-family="Arial" font-size="7" fill="#FFF5E0" text-anchor="middle">Cabinet</text>
+</svg>

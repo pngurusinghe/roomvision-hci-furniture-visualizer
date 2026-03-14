@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomVision — Asset Test Viewer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1a1d2e;
+            border-bottom: 1px solid #2d3748;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #a78bfa;
+        }
+
+        header p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            height: calc(100vh - 60px);
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────────── */
+        .sidebar {
+            background: #1a1d2e;
+            border-right: 1px solid #2d3748;
+            overflow-y: auto;
+            padding: 0.75rem 0;
+        }
+
+        .category-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #64748b;
+            padding: 0.85rem 1rem 0.35rem;
+        }
+
+        .asset-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.55rem 1rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
+            color: #cbd5e1;
+        }
+
+        .asset-btn:hover {
+            background: #252940;
+        }
+
+        .asset-btn.active {
+            background: #2d2f52;
+            color: #a78bfa;
+        }
+
+        .asset-btn .svg-thumb {
+            width: 36px;
+            height: 36px;
+            background: #252940;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .asset-btn .svg-thumb img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .asset-btn .name {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .asset-btn .cat {
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+
+        /* ── Viewer area ──────────────────────────────────────────── */
+        .viewer-area {
+            display: grid;
+            grid-template-rows: 1fr auto;
+            overflow: hidden;
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: #2d3748;
+            overflow: hidden;
+        }
+
+        .panel {
+            background: #151820;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 0.6rem 1rem;
+            background: #1a1d2e;
+            border-bottom: 1px solid #2d3748;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-2d {
+            background: #1d4ed8;
+            color: #bfdbfe;
+        }
+
+        .badge-3d {
+            background: #4f1d96;
+            color: #ddd6fe;
+        }
+
+        /* 2D Panel */
+        #svg-panel-body {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        #svg-container {
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #svg-container img {
+            max-width: min(400px, 100%);
+            max-height: min(400px, 100%);
+            object-fit: contain;
+            filter: drop-shadow(0 4px 24px rgba(167, 139, 250, 0.3));
+        }
+
+        /* 3D Panel */
+        #three-canvas-wrap {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #three-canvas-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #151820;
+            gap: 0.75rem;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        #loading-overlay.hidden {
+            opacity: 0;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #2d3748;
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #load-msg {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        #error-msg {
+            font-size: 0.8rem;
+            color: #f87171;
+            display: none;
+        }
+
+        /* Status bar */
+        .status-bar {
+            background: #1a1d2e;
+            border-top: 1px solid #2d3748;
+            padding: 0.5rem 1rem;
+            display: flex;
+            gap: 2rem;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .status-bar span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .status-bar strong {
+            color: #cbd5e1;
+        }
+
+        #error-banner {
+            display: none;
+            padding: 0.5rem 1rem;
+            background: #450a0a;
+            border-top: 1px solid #7f1d1d;
+            color: #fca5a5;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>RoomVision — Asset Test Viewer</h1>
+            <p>Sanity-check: 2D SVG top-down view (left) ↔ 3D GLTF render (right)</p>
+        </div>
+    </header>
+
+    <div class="layout">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div style="padding:0.5rem 1rem; font-size:0.7rem; color:#4a5568;">Loading manifest…</div>
+        </aside>
+
+        <!-- Viewer -->
+        <div class="viewer-area">
+            <div class="panels">
+
+                <!-- 2D Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="badge badge-2d">2D</span>
+                        Top-Down SVG Icon
+                        <span id="svg-name" style="margin-left:auto; color:#475569; font-size:0.65rem;"></span>
+                    </div>
+                    <div id="svg-panel-body">
+                        <div id="svg-container">
+                            <div style="color:#4a5568; font-size:0.85rem;">← Select an asset from the list</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="badge badge-3d">3D</span>
+                        GLTF Model — Three.js Render
+                        <span id="gltf-name" style="margin-left:auto; color:#475569; font-size:0.65rem;"></span>
+                    </div>
+                    <div id="three-canvas-wrap">
+                        <div id="loading-overlay">
+                            <div class="spinner"></div>
+                            <div id="load-msg">Select an asset to load its 3D model</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error-banner"></div>
+
+            <div class="status-bar">
+                <span>📂 <strong id="stat-path">—</strong></span>
+                <span>📐 SVG: <strong id="stat-svg-size">—</strong></span>
+                <span>🧊 GLTF: <strong id="stat-gltf-size">—</strong></span>
+                <span>🖼️ Textures: <strong id="stat-tex">—</strong></span>
+                <span>📏 Dimensions: <strong id="stat-dim">—</strong></span>
+                <span style="margin-left:auto;">
+                    🖱 Drag to orbit · Scroll to zoom · Right-drag to pan
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js via importmap -->
+    <script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+  }
+}
+</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
+        // ── Asset manifest (relative to THIS file's location) ─────────────────────
+        // This page lives in ./scripts/ so paths are ../assets/…
+        const BASE = '../assets';
+
+        const MANIFEST = [
+            // Seating
+            { cat: 'seating', name: 'Sofa', stem: 'sofa' },
+            { cat: 'seating', name: 'Armchair', stem: 'armchair' },
+            { cat: 'seating', name: 'Dining Chair', stem: 'dining_chair' },
+            { cat: 'seating', name: 'Bar Stool', stem: 'bar_stool' },
+            { cat: 'seating', name: 'Ottoman', stem: 'ottoman' },
+            // Tables
+            { cat: 'tables', name: 'Coffee Table', stem: 'coffee_table' },
+            { cat: 'tables', name: 'Round Table', stem: 'round_table' },
+            { cat: 'tables', name: 'Dining Table', stem: 'dining_table' },
+            { cat: 'tables', name: 'Side Table', stem: 'side_table' },
+            { cat: 'tables', name: 'Console Table', stem: 'console_table' },
+            // Storage
+            { cat: 'storage', name: 'Bookshelf', stem: 'bookshelf' },
+            { cat: 'storage', name: 'Tall Cabinet', stem: 'tall_cabinet' },
+            { cat: 'storage', name: 'Drawer Cabinet', stem: 'drawer_cabinet' },
+            { cat: 'storage', name: 'Commode', stem: 'commode' },
+            { cat: 'storage', name: 'Display Cabinet', stem: 'display_cabinet' },
+            // Bedroom
+            { cat: 'bedroom', name: 'Bed', stem: 'bed' },
+            { cat: 'bedroom', name: 'Nightstand', stem: 'nightstand' },
+            { cat: 'bedroom', name: 'Room Divider', stem: 'room_divider' },
+            { cat: 'bedroom', name: 'Vanity Stool', stem: 'vanity_stool' },
+            { cat: 'bedroom', name: 'Alarm Clock', stem: 'alarm_clock' },
+            // Decor
+            { cat: 'decor', name: 'Vase', stem: 'vase' },
+            { cat: 'decor', name: 'Picture Frame', stem: 'picture_frame' },
+            { cat: 'decor', name: 'Wall Frame', stem: 'wall_frame' },
+            { cat: 'decor', name: 'Chess Set', stem: 'chess_set' },
+            { cat: 'decor', name: 'Chandelier', stem: 'chandelier' },
+        ];
+
+        // ── Sidebar build ──────────────────────────────────────────────────────────
+        const sidebar = document.getElementById('sidebar');
+        let lastCat = '';
+        MANIFEST.forEach((item, i) => {
+            if (item.cat !== lastCat) {
+                lastCat = item.cat;
+                const lbl = document.createElement('div');
+                lbl.className = 'category-label';
+                lbl.textContent = item.cat;
+                sidebar.appendChild(lbl);
+            }
+            const btn = document.createElement('button');
+            btn.className = 'asset-btn';
+            btn.dataset.index = i;
+            btn.innerHTML = `
+    <div class="svg-thumb">
+      <img src="${BASE}/${item.cat}/${item.stem}.svg" alt="${item.name}"
+           onerror="this.style.opacity=0.2" />
+    </div>
+    <div>
+      <div class="name">${item.name}</div>
+      <div class="cat">${item.cat}</div>
+    </div>`;
+            btn.addEventListener('click', () => loadAsset(item, btn));
+            sidebar.appendChild(btn);
+        });
+
+        // ── Three.js setup ─────────────────────────────────────────────────────────
+        const wrap = document.getElementById('three-canvas-wrap');
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        renderer.shadowMap.enabled = true;
+        wrap.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x151820);
+
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 500);
+        camera.position.set(2.5, 2, 3);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+
+        // Lights
+        const amb = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(amb);
+        const dir = new THREE.DirectionalLight(0xffffff, 2);
+        dir.position.set(3, 6, 3);
+        dir.castShadow = true;
+        scene.add(dir);
+        const fill = new THREE.DirectionalLight(0x8090ff, 0.4);
+        fill.position.set(-3, 2, -3);
+        scene.add(fill);
+
+        // Floor grid helper
+        const grid = new THREE.GridHelper(10, 20, 0x1e2334, 0x1e2334);
+        scene.add(grid);
+
+        // Resize
+        function resize() {
+            const w = wrap.clientWidth, h = wrap.clientHeight;
+            renderer.setSize(w, h, false);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
+        new ResizeObserver(resize).observe(wrap);
+        resize();
+
+        // Render loop
+        (function loop() {
+            requestAnimationFrame(loop);
+            controls.update();
+            renderer.render(scene, camera);
+        })();
+
+        // ── GLTF Loader ────────────────────────────────────────────────────────────
+        const loader = new GLTFLoader();
+        let currentModel = null;
+
+        function clearModel() {
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel.traverse(c => {
+                    if (c.geometry) c.geometry.dispose();
+                    if (c.material) {
+                        const mats = Array.isArray(c.material) ? c.material : [c.material];
+                        mats.forEach(m => {
+                            for (const v of Object.values(m)) {
+                                if (v && typeof v.dispose === 'function') v.dispose();
+                            }
+                            m.dispose();
+                        });
+                    }
+                });
+                currentModel = null;
+            }
+        }
+
+        const overlay = document.getElementById('loading-overlay');
+        const loadMsg = document.getElementById('load-msg');
+        const errBanner = document.getElementById('error-banner');
+
+        function showLoading(msg) {
+            overlay.classList.remove('hidden');
+            loadMsg.textContent = msg;
+            errBanner.style.display = 'none';
+        }
+        function hideLoading() {
+            overlay.classList.add('hidden');
+        }
+        function showError(msg) {
+            overlay.classList.add('hidden');
+            errBanner.style.display = 'block';
+            errBanner.textContent = '❌ ' + msg;
+        }
+
+        // ── Load an asset pair ─────────────────────────────────────────────────────
+        function loadAsset(item, btn) {
+            // Mark active
+            document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const svgPath = `${BASE}/${item.cat}/${item.stem}.svg`;
+            const gltfPath = `${BASE}/${item.cat}/${item.stem}.gltf`;
+
+            // 2D panel
+            document.getElementById('svg-name').textContent = item.stem + '.svg';
+            document.getElementById('svg-container').innerHTML =
+                `<img src="${svgPath}" alt="${item.name}"
+          style="max-width:min(380px,100%); max-height:min(380px,100%);
+                 object-fit:contain;
+                 filter:drop-shadow(0 4px 24px rgba(167,139,250,0.3));"
+          onerror="this.outerHTML='<div style=color:#f87171;font-size:0.8rem>SVG failed to load: ${svgPath}</div>'" />`;
+
+            // Stat bar
+            document.getElementById('stat-path').textContent = `${item.cat}/${item.stem}`;
+            document.getElementById('gltf-name').textContent = item.stem + '.gltf';
+
+            // Fetch file sizes for status bar
+            fetchSize(svgPath, 'stat-svg-size');
+            fetchSize(gltfPath, 'stat-gltf-size');
+
+            // Count textures in the GLTF JSON
+            fetchTextureCount(gltfPath, 'stat-tex');
+
+            // 3D load
+            clearModel();
+            showLoading(`Loading ${item.name}…`);
+
+            // Reset dimensions
+            const dimEl = document.getElementById('stat-dim');
+            if (dimEl) dimEl.textContent = '—';
+
+            loader.load(
+                gltfPath,
+                (gltf) => {
+                    const model = gltf.scene;
+
+                    // Fit model into view
+                    const box = new THREE.Box3().setFromObject(model);
+                    const size = box.getSize(new THREE.Vector3());
+
+                    // Display physical dimensions (W x D x H in meters)
+                    if (dimEl) {
+                        const w = size.x.toFixed(2);
+                        const h = size.y.toFixed(2);
+                        const d = size.z.toFixed(2);
+                        dimEl.textContent = `${w}m × ${d}m × ${h}m`;
+                    }
+
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 1.8 / maxDim;
+                    model.scale.setScalar(scale);
+
+                    // Sit on floor (y=0)
+                    const box2 = new THREE.Box3().setFromObject(model);
+                    model.position.y = -box2.min.y;
+
+                    // Enable shadows
+                    model.traverse(c => {
+                        if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; }
+                    });
+
+                    scene.add(model);
+                    currentModel = model;
+
+                    // Position camera to face it nicely
+                    const centre = new THREE.Vector3();
+                    new THREE.Box3().setFromObject(model).getCenter(centre);
+                    controls.target.copy(centre);
+                    camera.position.set(
+                        centre.x + size.x * scale * 1.8,
+                        centre.y + size.y * scale * 1.2,
+                        centre.z + size.z * scale * 2
+                    );
+                    controls.update();
+
+                    hideLoading();
+                },
+                (xhr) => {
+                    if (xhr.total) {
+                        const pct = (xhr.loaded / xhr.total * 100).toFixed(0);
+                        loadMsg.textContent = `Loading ${item.name}… ${pct}%`;
+                    }
+                },
+                (err) => {
+                    showError(`Failed to load ${gltfPath}. Check texture paths and CORS. ${err.message}`);
+                    console.error('GLTF load error:', err);
+                }
+            );
+        }
+
+        // ── Helpers ────────────────────────────────────────────────────────────────
+        async function fetchSize(url, spanId) {
+            try {
+                const r = await fetch(url, { method: 'HEAD' });
+                const len = r.headers.get('content-length');
+                const el = document.getElementById(spanId);
+                if (el) el.textContent = len ? `${(len / 1024).toFixed(1)} KB` : 'loaded';
+            } catch { }
+        }
+
+        async function fetchTextureCount(gltfUrl, spanId) {
+            try {
+                const r = await fetch(gltfUrl);
+                const j = await r.json();
+                const count = (j.images || []).length;
+                const el = document.getElementById(spanId);
+                if (el) el.textContent = `${count} referenced`;
+            } catch { }
+        }
+
+        // Auto-load the first asset (sofa)
+        const firstBtn = sidebar.querySelector('.asset-btn');
+        if (firstBtn) firstBtn.click();
+    </script>
+</body>
+
+</html>

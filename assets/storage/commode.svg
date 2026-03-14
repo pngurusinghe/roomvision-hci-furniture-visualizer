@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 70" width="90" height="70">
+  <rect x="4" y="4" width="82" height="62" rx="4" fill="#6B4C3B" stroke="#3D2416" stroke-width="2"/>
+  <line x1="45" y1="4" x2="45" y2="66" stroke="#3D2416" stroke-width="1.5"/>
+  <circle cx="28" cy="35" r="4" fill="#C8B040"/>
+  <circle cx="62" cy="35" r="4" fill="#C8B040"/>
+  <text x="45" y="38" font-family="Arial" font-size="7" fill="#FFF5E0" text-anchor="middle">Commode</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 120" width="70" height="120">
+  <rect x="4" y="4" width="62" height="112" rx="4" fill="#5C3D1E" stroke="#3D2010" stroke-width="2"/>
+  <line x1="4" y1="40" x2="66" y2="40" stroke="#3D2010" stroke-width="1.5"/>
+  <line x1="4" y1="76" x2="66" y2="76" stroke="#3D2010" stroke-width="1.5"/>
+  <rect x="12" y="10" width="46" height="26" rx="2" fill="#C8D8B8" opacity="0.5"/>
+  <rect x="12" y="46" width="46" height="26" rx="2" fill="#C8D8B8" opacity="0.5"/>
+  <rect x="12" y="82" width="46" height="26" rx="2" fill="#7A5A47"/>
+  <circle cx="35" cy="112" r="4" fill="#C8B040"/>
+  <text x="35" y="58" font-family="Arial" font-size="7" fill="#FFF5E0" text-anchor="middle">Display Cab.</text>
+</svg>

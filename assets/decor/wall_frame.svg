@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 80" width="65" height="80">
+  <rect x="3" y="3" width="59" height="74" rx="3" fill="#5C4A2A" stroke="#3D2B00" stroke-width="3"/>
+  <rect x="10" y="10" width="45" height="60" rx="1" fill="#F0E8D8" stroke="#3D2B00" stroke-width="1"/>
+  <rect x="16" y="16" width="33" height="48" fill="#D4C8B0" rx="1"/>
+  <text x="32" y="45" font-family="Arial" font-size="7" fill="#3D2B00" text-anchor="middle">Frame</text>
+</svg>

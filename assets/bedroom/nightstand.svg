@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 70" width="65" height="70">
+  <rect x="4" y="4" width="57" height="62" rx="4" fill="#8B7355" stroke="#5C4A2A" stroke-width="2"/>
+  <rect x="10" y="12" width="45" height="22" rx="2" fill="#A08060"/>
+  <rect x="10" y="38" width="45" height="20" rx="2" fill="#A08060"/>
+  <circle cx="32" cy="23" r="3" fill="#D4A96A"/>
+  <circle cx="32" cy="48" r="3" fill="#D4A96A"/>
+  <text x="32" y="68" font-family="Arial" font-size="7" fill="#FFF5E0" text-anchor="middle">Nightstand</text>
+</svg>

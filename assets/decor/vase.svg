@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 70" width="50" height="70">
+  <ellipse cx="25" cy="55" rx="18" ry="10" fill="#B8A080" stroke="#8B7355" stroke-width="1.5"/>
+  <ellipse cx="25" cy="20" rx="12" ry="8" fill="#D4B890" stroke="#8B7355" stroke-width="1.5"/>
+  <path d="M13,20 Q7,35 7,55 Q7,62 25,65 Q43,62 43,55 Q43,35 37,20" fill="#C8A06A" stroke="#8B7355" stroke-width="1.5"/>
+  <text x="25" y="58" font-family="Arial" font-size="7" fill="#3D2B00" text-anchor="middle">Vase</text>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <rect x="4" y="4" width="72" height="72" rx="3" fill="#C8B090" stroke="#5C4A2A" stroke-width="2"/>
+  <!-- Chess board pattern -->
+  <rect x="10" y="10" width="15" height="15" fill="#3D2B00"/>
+  <rect x="40" y="10" width="15" height="15" fill="#3D2B00"/>
+  <rect x="25" y="25" width="15" height="15" fill="#3D2B00"/>
+  <rect x="55" y="25" width="15" height="15" fill="#3D2B00"/>
+  <rect x="10" y="40" width="15" height="15" fill="#3D2B00"/>
+  <rect x="40" y="40" width="15" height="15" fill="#3D2B00"/>
+  <rect x="25" y="55" width="15" height="15" fill="#3D2B00"/>
+  <rect x="55" y="55" width="15" height="15" fill="#3D2B00"/>
+  <text x="40" y="76" font-family="Arial" font-size="7" fill="#3D2B00" text-anchor="middle">Chess</text>
+</svg>

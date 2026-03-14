@@ -33,7 +33,7 @@ const roomState = {
         if (pid) {
             roomState.projectId = pid;
             console.log('📂 Room setup opened for project:', pid);
-
+            
             // Update breadcrumb to link back to project details
             const breadcrumbLink = document.getElementById('breadcrumbProjectsLink');
             const breadcrumbProject = document.getElementById('breadcrumbProject');
@@ -90,7 +90,7 @@ function initializeTheme() {
     // Check for saved theme preference or default to light mode
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
-
+    
     // Set up theme toggle
     if (elements.themeToggle) {
         elements.themeToggle.addEventListener('click', toggleTheme);
@@ -100,13 +100,13 @@ function initializeTheme() {
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
+    
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-
+    
     // Add transition effect
     document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-
+    
     // Show feedback
     showSuccess(`Switched to ${newTheme} mode`, 2000);
 }
@@ -169,13 +169,13 @@ function initializeEventListeners() {
         wallPicker.addEventListener('input', (e) => {
             wallPreview.style.backgroundColor = e.target.value;
             roomState.wallColor = e.target.value;
-
+            
             // Uncheck all radio wall colors
             document.querySelectorAll('input[name="wallColor"][type="radio"]').forEach(radio => {
                 radio.checked = false;
             });
         });
-
+        
         // Click on preview to trigger color picker
         wallPreview.addEventListener('click', () => {
             wallPicker.click();
@@ -194,13 +194,13 @@ function initializeEventListeners() {
         floorPicker.addEventListener('input', (e) => {
             floorPreview.style.backgroundColor = e.target.value;
             roomState.floorColor = e.target.value;
-
+            
             // Uncheck all radio floor colors
             document.querySelectorAll('input[name="floorColor"][type="radio"]').forEach(radio => {
                 radio.checked = false;
             });
         });
-
+        
         // Click on preview to trigger color picker
         floorPreview.addEventListener('click', () => {
             floorPicker.click();
@@ -234,14 +234,14 @@ function initializeEventListeners() {
  */
 function handleWidthInput(e) {
     const value = parseFloat(e.target.value);
-
+    
     // Clear previous error
     clearError(elements.widthInput, elements.widthError);
-
+    
     // Validate if value exists
     if (e.target.value) {
         const validation = validateDimension(value, 'Width');
-
+        
         if (!validation.isValid) {
             showError(elements.widthInput, elements.widthError, validation.message);
             roomState.width = null;
@@ -258,7 +258,7 @@ function handleWidthInput(e) {
     } else {
         roomState.width = null;
     }
-
+    
     updatePreview();
     updateContinueButton();
 }
@@ -269,12 +269,12 @@ function handleWidthInput(e) {
  */
 function handleLengthInput(e) {
     const value = parseFloat(e.target.value);
-
+    
     clearError(elements.lengthInput, elements.lengthError);
-
+    
     if (e.target.value) {
         const validation = validateDimension(value, 'Length');
-
+        
         if (!validation.isValid) {
             showError(elements.lengthInput, elements.lengthError, validation.message);
             roomState.length = null;
@@ -291,7 +291,7 @@ function handleLengthInput(e) {
     } else {
         roomState.length = null;
     }
-
+    
     updatePreview();
     updateContinueButton();
 }
@@ -301,12 +301,12 @@ function handleLengthInput(e) {
  */
 function handleHeightInput(e) {
     const value = parseFloat(e.target.value);
-
+    
     clearError(elements.heightInput, elements.heightError);
-
+    
     if (e.target.value) {
         const validation = validateDimension(value, 'Height', 2, 6);
-
+        
         if (!validation.isValid) {
             showError(elements.heightInput, elements.heightError, validation.message);
             roomState.height = 2.8; // Reset to default
@@ -323,7 +323,7 @@ function handleHeightInput(e) {
     } else {
         roomState.height = 2.8; // Use default
     }
-
+    
     updatePreview();
 }
 
@@ -336,26 +336,26 @@ function handlePresetClick(e) {
     const width = parseFloat(btn.dataset.width);
     const length = parseFloat(btn.dataset.length);
     const height = parseFloat(btn.dataset.height);
-
+    
     // Update form inputs
     elements.widthInput.value = width;
     elements.lengthInput.value = length;
     elements.heightInput.value = height;
-
+    
     // Update state
     roomState.width = width;
     roomState.length = length;
     roomState.height = height;
-
+    
     // Clear any errors
     clearError(elements.widthInput, elements.widthError);
     clearError(elements.lengthInput, elements.lengthError);
     clearError(elements.heightInput, elements.heightError);
-
+    
     // Update UI
     updatePreview();
     updateContinueButton();
-
+    
     // Enhanced visual feedback with ripple effect
     const ripple = document.createElement('span');
     ripple.style.cssText = `
@@ -369,13 +369,13 @@ function handlePresetClick(e) {
         transform: translate(-50%, -50%);
         animation: ripple 0.6s ease-out;
     `;
-
+    
     btn.style.position = 'relative';
     btn.style.overflow = 'hidden';
     btn.appendChild(ripple);
-
+    
     setTimeout(() => ripple.remove(), 600);
-
+    
     // Show success feedback
     showSuccess('Preset applied successfully!', 2000);
 }
@@ -387,7 +387,7 @@ function handlePresetClick(e) {
 function handleShapeChange(e) {
     roomState.shape = e.target.value;
     updatePreview();
-
+    
     // Add subtle animation to the selected shape
     const selectedCard = e.target.nextElementSibling;
     selectedCard.style.transform = 'scale(1.05)';
@@ -398,7 +398,7 @@ function handleShapeChange(e) {
 
 function handleWallColorChange(e) {
     roomState.wallColor = e.target.value;
-
+    
     // Add subtle animation to the selected color
     const selectedSwatch = e.target.nextElementSibling;
     selectedSwatch.style.transform = 'scale(1.15) translateY(-4px)';
@@ -409,7 +409,7 @@ function handleWallColorChange(e) {
 
 function handleFloorColorChange(e) {
     roomState.floorColor = e.target.value;
-
+    
     // Add subtle animation to the selected color
     const selectedSwatch = e.target.nextElementSibling;
     selectedSwatch.style.transform = 'scale(1.15) translateY(-4px)';
@@ -420,7 +420,7 @@ function handleFloorColorChange(e) {
 
 function handleRoomTypeChange(e) {
     roomState.roomType = e.target.value;
-
+    
     // Add subtle animation to the selected room type
     const selectedCard = e.target.nextElementSibling;
     selectedCard.style.transform = 'translateY(-6px) scale(1.02)';
@@ -439,21 +439,21 @@ function handleRoomTypeChange(e) {
  */
 function updatePreview() {
     const { width, length, height } = roomState;
-
+    
     if (width && length) {
         const area = (width * length).toFixed(2);
         const volume = height ? (width * length * height).toFixed(2) : null;
-
+        
         let previewHTML = `<strong>Total floor area:</strong> ${area} m²`;
-
+        
         if (volume) {
             previewHTML += ` | <strong>Volume:</strong> ${volume} m³`;
         }
-
+        
         elements.previewText.innerHTML = previewHTML;
         elements.previewInfo.style.background = 'linear-gradient(135deg, var(--primary-light), rgba(59, 130, 246, 0.1))';
         elements.previewInfo.style.borderColor = 'var(--primary-blue)';
-
+        
         // Add a subtle pulse animation to highlight the update
         elements.previewInfo.style.animation = 'pulse 0.5s ease-out';
         setTimeout(() => {
@@ -476,7 +476,7 @@ function updatePreview() {
  */
 function updateContinueButton() {
     const validation = validateRoomData(roomState);
-
+    
     if (validation.isValid) {
         elements.continueBtn.disabled = false;
         elements.continueBtn.style.opacity = '1';
@@ -498,49 +498,44 @@ function updateContinueButton() {
  */
 async function handleFormSubmit(e) {
     e.preventDefault();
-
+    
     // Final validation check
     const validation = validateRoomData(roomState);
-
+    
     if (!validation.isValid) {
         showWarning(validation.message || 'Please fix all errors before continuing.');
         return;
     }
-
+    
     // Calculate area for storage
     const roomData = {
         ...roomState,
         area: roomState.width * roomState.length,
         createdAt: new Date().toISOString()
     };
-
+    
     try {
         showLoading(elements.loadingOverlay);
-
+        
         // Save to Firestore (use project if available)
-        const docId = roomState.projectId
-            ? await saveRoomToProject(roomData)
+        const docId = roomState.projectId 
+            ? await saveRoomToProject(roomData) 
             : await saveRoomToFirestore(roomData);
-
+        
         // Store room ID in sessionStorage for next page
         sessionStorage.setItem('currentRoomId', docId);
         sessionStorage.setItem('currentRoomData', JSON.stringify(roomData));
-
+        
         hideLoading(elements.loadingOverlay);
-
+        
         // Show success message before navigation
         showSuccess('Room configuration saved successfully!', 1500);
-
-        // Navigate to 2D Editor (with project context if available)
+        
+        // Navigate to 2D Editor after brief delay
         setTimeout(() => {
-            if (roomState.projectId && docId) {
-                window.location.href = `editor-2d.html?projectId=${roomState.projectId}&roomId=${docId}`;
-            } else {
-                window.location.href = 'furniture-shop.html';
-            }
+            window.location.href = 'furniture-shop.html';
         }, 1500);
-
-
+        
     } catch (error) {
         hideLoading(elements.loadingOverlay);
         console.error('Save error:', error);
@@ -555,34 +550,34 @@ async function handleFormSubmit(e) {
 function handleBackClick() {
     // Check if there are unsaved changes
     const hasChanges = roomState.width || roomState.length;
-
+    
     if (hasChanges && !confirm('Are you sure you want to go back? Unsaved changes will be lost.')) {
         return;
     }
-
-    // If part of a project, go back to project details; otherwise go to manage designs
+    
+    // If part of a project, go back to project details; otherwise go to projects list
     if (roomState.projectId) {
         window.location.href = `project-details.html?projectId=${roomState.projectId}`;
     } else {
-        window.location.href = 'manage-designs.html';
+        window.location.href = 'projects.html';
     }
 }
 
 async function handleSaveDraft() {
     const validation = validateRoomData(roomState);
-
+    
     if (!validation.isValid) {
         showWarning('Please fill in valid dimensions before saving a draft.');
         return;
     }
-
+    
     const roomData = {
         ...roomState,
         area: roomState.width * roomState.length,
         isDraft: true,
         createdAt: new Date().toISOString()
     };
-
+    
     try {
         showLoading(elements.loadingOverlay);
         // Use saveRoomToProject if projectId is present, else save globally
@@ -610,7 +605,7 @@ function handleKeyboardShortcuts(e) {
         e.preventDefault();
         handleSaveDraft();
     }
-
+    
     // Ctrl/Cmd + Enter to submit (if valid)
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
@@ -618,7 +613,7 @@ function handleKeyboardShortcuts(e) {
             elements.form.dispatchEvent(new Event('submit'));
         }
     }
-
+    
     // Ctrl/Cmd + D to toggle dark mode
     if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();

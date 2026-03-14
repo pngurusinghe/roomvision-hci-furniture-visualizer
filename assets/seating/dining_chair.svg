@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 80" width="70" height="80">
+  <rect x="10" y="25" width="50" height="45" rx="4" fill="#C8A882" stroke="#8B6914" stroke-width="2"/>
+  <rect x="10" y="8" width="50" height="20" rx="3" fill="#8B6914" stroke="#5C4508" stroke-width="1.5"/>
+  <circle cx="14" cy="72" r="3" fill="#5C4508"/>
+  <circle cx="56" cy="72" r="3" fill="#5C4508"/>
+  <text x="35" y="52" font-family="Arial" font-size="8" fill="#3D2B00" text-anchor="middle">Chair</text>
+</svg>

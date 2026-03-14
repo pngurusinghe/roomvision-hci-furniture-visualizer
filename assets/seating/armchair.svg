@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 90" width="90" height="90">
+  <rect x="10" y="10" width="70" height="70" rx="8" fill="#A0855B" stroke="#6B5030" stroke-width="2"/>
+  <rect x="10" y="10" width="70" height="20" rx="6" fill="#7A6040" stroke="#6B5030" stroke-width="1.5"/>
+  <rect x="10" y="10" width="16" height="70" rx="6" fill="#7A6040" stroke="#6B5030" stroke-width="1.5"/>
+  <rect x="64" y="10" width="16" height="70" rx="6" fill="#7A6040" stroke="#6B5030" stroke-width="1.5"/>
+  <text x="45" y="62" font-family="Arial" font-size="8" fill="#FFF5E0" text-anchor="middle">Armchair</text>
+</svg>
