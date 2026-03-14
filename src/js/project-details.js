@@ -128,13 +128,13 @@ function renderRooms(rooms) {
             </div>
             <div class="room-actions" style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
                 <button class="btn-outline btn-sm" onclick="window.location.href='room-setup.html?projectId=${currentProjectId}&roomId=${room.id}'">
-                    ✏️ Edit Room
+                    <span>✏️ Edit Room</span>
                 </button>
-                <button class="btn-primary btn-sm" onclick="window.location.href='editor-2d.html?projectId=${currentProjectId}&roomId=${room.id}'" style="background:#8b5cf6;border:none;color:white;padding:0.4rem 0.9rem;border-radius:0.375rem;cursor:pointer;font-size:0.8rem;font-weight:600;">
-                    🏠 Edit Design
+                <button class="btn-primary btn-sm" onclick="window.location.href='editor-2d.html?projectId=${currentProjectId}&roomId=${room.id}'">
+                    <span>🏠 Edit Design</span>
                 </button>
-                <button class="btn-danger btn-sm" onclick="deleteRoom('${room.id}')" style="background:#ef4444;border:none;color:white;padding:0.4rem 0.9rem;border-radius:0.375rem;cursor:pointer;font-size:0.8rem;font-weight:600;">
-                    🗑️ Delete
+                <button class="btn-danger btn-sm" onclick="deleteRoom('${room.id}')">
+                    <span>🗑️ Delete</span>
                 </button>
             </div>
         `;
