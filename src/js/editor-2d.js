@@ -81,21 +81,34 @@ class RoomEditor2D {
     }
 
     async loadState() {
-        // 1. Session State Recovery (returning from Shop or 3D View)
+        // 1. Session State Recovery
         let hasSessionState = false;
         try {
+            // Try 3D layout first (from view3d)
             const sessionRaw = sessionStorage.getItem('current3DLayout');
             if (sessionRaw) {
                 const layout = JSON.parse(sessionRaw);
                 if (!this.projectId && layout.projectId) this.projectId = layout.projectId;
                 if (!this.roomId && layout.roomId) this.roomId = layout.roomId;
                 
-                // If we have a full session payload, we might not need to fetch from Firestore again
-                // but fetching ensures we have the latest base room data.
-                // We will merge the session furniture so we don't lose items added before the shop visit.
                 if (layout.furniture && layout.furniture.length > 0) {
                     this.furnitureState = layout.furniture;
                     hasSessionState = true;
+                }
+            } else {
+                // Flash recovery: we might be coming directly from room-setup or shop
+                const tempRoomId = sessionStorage.getItem('currentRoomId');
+                const tempRoomData = sessionStorage.getItem('currentRoomData');
+                if (tempRoomId) {
+                    if (!this.roomId) this.roomId = tempRoomId;
+                    if (tempRoomData) {
+                        try {
+                            const parsed = JSON.parse(tempRoomData);
+                            if (!this.projectId && parsed.projectId) {
+                                this.projectId = parsed.projectId;
+                            }
+                        } catch(e){}
+                    }
                 }
             }
         } catch (e) {
@@ -103,12 +116,13 @@ class RoomEditor2D {
         }
 
         if (this.projectId && this.roomId) {
-            // New flow: Load from Project Rooms
+            // Project-bound room
             const roomRef = doc(db, `projects/${this.projectId}/rooms/${this.roomId}`);
             const roomSnap = await getDoc(roomRef);
             
             if (!roomSnap.exists()) {
-                alert('Room not found');
+                alert('Room not found inside project.');
+                window.location.href = "projects.html";
                 return;
             }
             
@@ -122,7 +136,6 @@ class RoomEditor2D {
                 roomType: data.roomType || 'room'
             };
 
-            // Load furniture sub-collection ONLY if we didn't just recover a fresher array from session
             if (!hasSessionState) {
                 this.furnitureState = [];
                 if (data.layout && data.layout.furnitureRefs) {
@@ -132,11 +145,33 @@ class RoomEditor2D {
                         this.furnitureState.push({ ...d.data(), firestoreId: d.id });
                     });
                 } else if (data.layout && data.layout.furniture) {
-                    // Legacy inline
                     this.furnitureState = data.layout.furniture;
                 }
             }
+        } else if (this.roomId) {
+            // Standalone room (no project ID)
+            const roomRef = doc(db, 'rooms', this.roomId);
+            const roomSnap = await getDoc(roomRef);
+            
+            if (!roomSnap.exists()) {
+                alert('Standalone room not found.');
+                window.location.href = "projects.html";
+                return;
+            }
+            
+            const data = roomSnap.data();
+            this.roomData = {
+                width: data.width,
+                length: data.length,
+                height: data.height || 2.8,
+                wallColor: data.wallColor || '#FFFFFF',
+                floorColor: data.floorColor || '#F5DEB3',
+                roomType: data.roomType || 'room'
+            };
 
+            if (!hasSessionState) {
+                this.furnitureState = data.layout?.furniture || [];
+            }
         } else if (this.designId) {
             // Legacy standalone design flow
             const docRef = doc(db, 'designs', this.designId);
@@ -149,7 +184,6 @@ class RoomEditor2D {
                 }
             }
         } else {
-            // New empty room without project ID?
             alert("No room specified.");
             window.location.href = "projects.html";
             return;
