@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 100" width="140" height="100">
+  <rect x="4" y="4" width="132" height="92" rx="6" fill="#E8E0D0" stroke="#8B7355" stroke-width="2"/>
+  <rect x="4" y="4" width="132" height="28" rx="6" fill="#8B7355" stroke="#5C4A2A" stroke-width="2"/>
+  <rect x="10" y="36" width="55" height="55" rx="4" fill="#F0E8D8" stroke="#C8B090" stroke-width="1"/>
+  <rect x="75" y="36" width="55" height="55" rx="4" fill="#F0E8D8" stroke="#C8B090" stroke-width="1"/>
+  <text x="70" y="20" font-family="Arial" font-size="9" fill="#FFF5E0" text-anchor="middle">Bed</text>
+</svg>

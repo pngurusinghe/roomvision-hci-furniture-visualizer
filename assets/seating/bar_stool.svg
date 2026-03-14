@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 70" width="70" height="70">
+  <circle cx="35" cy="35" r="28" fill="#C8A882" stroke="#8B6914" stroke-width="2"/>
+  <circle cx="35" cy="35" r="20" fill="#B8966E" stroke="#8B6914" stroke-width="1.5"/>
+  <line x1="35" y1="35" x2="10" y2="60" stroke="#8B6914" stroke-width="2"/>
+  <line x1="35" y1="35" x2="60" y2="60" stroke="#8B6914" stroke-width="2"/>
+  <text x="35" y="38" font-family="Arial" font-size="8" fill="#3D2B00" text-anchor="middle">Stool</text>
+</svg>

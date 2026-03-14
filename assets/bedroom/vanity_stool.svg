@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 70" width="70" height="70">
+  <rect x="8" y="8" width="54" height="54" rx="8" fill="#C8A882" stroke="#8B6914" stroke-width="2"/>
+  <rect x="18" y="18" width="34" height="34" rx="4" fill="#D4B890" stroke="#8B6914" stroke-width="1"/>
+  <circle cx="17" cy="17" r="5" fill="#8B6914"/>
+  <circle cx="53" cy="17" r="5" fill="#8B6914"/>
+  <circle cx="17" cy="53" r="5" fill="#8B6914"/>
+  <circle cx="53" cy="53" r="5" fill="#8B6914"/>
+  <text x="35" y="40" font-family="Arial" font-size="8" fill="#3D2B00" text-anchor="middle">Stool</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 50" width="140" height="50">
+  <rect x="5" y="5" width="130" height="40" rx="5" fill="#C8954A" stroke="#8B5A14" stroke-width="2"/>
+  <rect x="15" y="12" width="110" height="26" rx="2" fill="#D4A96A" stroke="#8B5A14" stroke-width="1"/>
+  <circle cx="14" cy="14" r="5" fill="#8B5A14"/>
+  <circle cx="126" cy="14" r="5" fill="#8B5A14"/>
+  <circle cx="14" cy="36" r="5" fill="#8B5A14"/>
+  <circle cx="126" cy="36" r="5" fill="#8B5A14"/>
+  <text x="70" y="30" font-family="Arial" font-size="8" fill="#3D2B00" text-anchor="middle">Console Table</text>
+</svg>
