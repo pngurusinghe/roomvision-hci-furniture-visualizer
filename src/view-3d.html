@@ -190,7 +190,7 @@
             gap: 1rem;
         }
 
-        /* 3D Rotation panel (Phase 4) */
+        /* Enhanced 3D Object Controls panel */
         .rotation-panel {
             position: fixed;
             bottom: 80px;
@@ -198,30 +198,71 @@
             background: white;
             border: 1px solid var(--border);
             border-radius: 0.75rem;
-            padding: 1rem 1.25rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
             z-index: 200;
             display: none;
             /* shown by JS when an object is selected */
             flex-direction: column;
-            align-items: center;
-            gap: 0.6rem;
-            min-width: 160px;
+            gap: 1rem;
+            min-width: 220px;
+            max-width: 280px;
         }
 
         .rotation-panel h4 {
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-primary);
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .object-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .object-info span {
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            text-align: center;
         }
 
         .rotation-panel .angle-badge {
             font-size: 1.25rem;
             font-weight: 700;
             color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        .move-controls, .rotate-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .move-controls h5, .rotate-controls h5 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .control-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-style: italic;
+            margin: 0;
         }
 
         .rotation-panel .btn-row {
@@ -238,11 +279,51 @@
             font-size: 0.875rem;
             background: var(--primary);
             color: white;
-            transition: background 0.15s;
+            transition: all 0.15s;
+            flex: 1;
         }
 
         .rotation-panel button:hover {
             background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Enhanced controls hint */
+        .controls-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            z-index: 100;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        .controls-hint span {
+            display: block;
+        }
+
+        .feature-highlight {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
     </style>
 
@@ -346,21 +427,33 @@
 
     <div id="three-container"></div>
 
-    <!-- Phase 4: Rotation panel -->
+    <!-- Enhanced Phase 4: Object Controls Panel -->
     <div class="rotation-panel" id="rotationPanel">
-        <h4>🔄 Rotate Object</h4>
-        <div class="angle-badge" id="rotationAngle">0°</div>
-        <div class="btn-row">
-            <button id="rotateLeftBtn" title="Rotate 15° counter-clockwise">↺ Left</button>
-            <button id="rotateRightBtn" title="Rotate 15° clockwise">Right ↻</button>
+        <h4>🔄 Object Controls</h4>
+        <div class="object-info">
+            <span id="selectedObjectName">No object selected</span>
+            <div class="angle-badge" id="rotationAngle">0°</div>
+        </div>
+        <div class="move-controls">
+            <h5>🎮 Move Object</h5>
+            <p class="control-hint">Click and drag to move with surface snapping</p>
+        </div>
+        <div class="rotate-controls">
+            <h5>🔄 Rotate Object</h5>
+            <div class="btn-row">
+                <button id="rotateLeftBtn" title="Rotate 15° counter-clockwise">↺ Left</button>
+                <button id="rotateRightBtn" title="Rotate 15° clockwise">Right ↻</button>
+            </div>
         </div>
     </div>
 
     <div class="controls-hint">
-        <span>🖱️ <strong>Left Click + Drag:</strong> Rotate</span>
-        <span>🖱️ <strong>Right Click + Drag:</strong> Pan</span>
-        <span>🖱️ <strong>Scroll:</strong> Zoom</span>
-        <span>🖱️ <strong>Click object:</strong> Select to rotate</span>
+        <span>🔄 <strong>Left Click + Drag (Camera):</strong> Rotate view</span>
+        <span>🎮 <strong>Left Click + Drag (Object):</strong> Move with surface snapping</span>
+        <span>🔍 <strong>Right Click + Drag:</strong> Pan camera</span>
+        <span>🔍 <strong>Scroll:</strong> Zoom in/out</span>
+        <span>✨ <strong>Click object:</strong> Select for move & rotate</span>
+        <div class="feature-highlight">New: Drag objects to move them! Decor automatically snaps to table surfaces!</div>
     </div>
 
     <script type="module" src="js/view3d.js"></script>

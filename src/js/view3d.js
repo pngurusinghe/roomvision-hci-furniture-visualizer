@@ -29,9 +29,23 @@ class Room3DVisualizer {
         // The 2D editor uses scale = 80 pixels per meter.
         this.pixelToMeterRatio = 1 / 80;
 
-        // Phase 5: surface snapping — furniture items that expose a top surface
+        // Phase 5: Enhanced surface snapping — furniture items that expose a top surface
         // (tables, desks…) register themselves here so decor can snap on top.
         this.surfaceMeshes = [];
+        
+        // Enhanced 3D move feature
+        this.isDraggingObject = false;
+        this.dragPlane = new THREE.Plane();
+        this.dragOffset = new THREE.Vector3();
+        this.dragIntersection = new THREE.Vector3();
+        this.moveHelper = null; // Visual helper for move operations
+        
+        console.log('🏗️ Initializing 3D View with enhanced surface snapping and 3D move feature...');
+        console.log('📋 Surface detection categories:');
+        console.log('   - Table-top decor: vase, clock, alarm, chess, candle, lamp, etc.');
+        console.log('   - Wall art: painting, frame, artwork, picture, mirror, etc.');
+        console.log('   - Surface items: table, desk, shelf, cabinet, dresser, etc.');
+        console.log('🎮 Move controls: Click and drag objects to move them with surface snapping!');
 
         this.init();
     }
@@ -50,7 +64,8 @@ class Room3DVisualizer {
         await this.buildFurniture();
 
         this.setupLighting();
-        this.setupSelectionAndRotation();  // Phase 4
+        this.setupSelectionAndMovement();
+        this.setupRotationButtons();  // Phase 4
         this.animate();
 
         // Hide transition overlay once scene is ready
@@ -160,41 +175,103 @@ class Room3DVisualizer {
         buildWall(wallThickness, height, length, width / 2 + wallThickness / 2, halfH, 0);
     }
 
-    // ── Phase 5: Surface-snapping helpers ────────────────────────────────────
+    // ── Phase 5: Enhanced Surface-snapping helpers ──────────────────────────
 
     /** Small decor that should rest on top of a table / desk / shelf surface. */
     _isTableTopDecor(name) {
-        const kw = ['vase', 'clock', 'alarm', 'chess', 'candle', 'figurine',
-                    'bowl', 'plant', 'lamp'];
-        return kw.some(k => name.toLowerCase().includes(k));
+        const nameLower = name.toLowerCase();
+        const kw = [
+            'vase', 'clock', 'alarm', 'chess', 'candle', 'figurine',
+            'bowl', 'plant', 'lamp', 'book', 'statue', 'ornament',
+            'decoration', 'display', 'artifact', 'trophy', 'mug',
+            'cup', 'glass', 'bottle', 'jar', 'photo', 'frame'
+        ];
+        const isDecor = kw.some(k => nameLower.includes(k));
+        if (isDecor) {
+            console.log(`🎯 Detected table-top decor: "${name}"`);
+        }
+        return isDecor;
     }
 
     /** Wall art items that snap onto a wall face instead of the floor. */
     _isWallArt(name) {
-        const kw = ['painting', 'frame', 'artwork', 'picture', 'poster',
-                    'canvas', 'mirror'];
-        return kw.some(k => name.toLowerCase().includes(k));
+        const nameLower = name.toLowerCase();
+        const kw = [
+            'painting', 'frame', 'artwork', 'picture', 'poster',
+            'canvas', 'mirror', 'art', 'portrait', 'print',
+            'hanging', 'wall', 'mounted'
+        ];
+        const isWallArt = kw.some(k => nameLower.includes(k));
+        if (isWallArt) {
+            console.log(`🖼️ Detected wall art: "${name}"`);
+        }
+        return isWallArt;
     }
 
     /** Items that have a placeable top surface (tables, desks, cabinets…). */
     _isSurfaceItem(name) {
-        const kw = ['table', 'desk', 'shelf', 'counter', 'cabinet',
-                    'dresser', 'sideboard', 'tv unit'];
-        return kw.some(k => name.toLowerCase().includes(k));
+        const nameLower = name.toLowerCase();
+        const kw = [
+            'table', 'desk', 'shelf', 'counter', 'cabinet',
+            'dresser', 'sideboard', 'tv unit', 'console',
+            'stand', 'bench', 'ottoman', 'stool', 'surface'
+        ];
+        const isSurface = kw.some(k => nameLower.includes(k));
+        if (isSurface) {
+            console.log(`📦 Registering surface item: "${name}"`);
+        }
+        return isSurface;
     }
 
     /**
-     * Casts a ray straight down from above (x3D, z3D) and returns the Y of
-     * the highest registered surface hit, or 0 (floor) when nothing is below.
+     * Enhanced surface detection with multiple raycasts and better height calculation.
+     * Casts rays from above and finds the highest valid surface below the given position.
      */
     _findSurfaceHeightBelow(x3D, z3D) {
-        if (this.surfaceMeshes.length === 0) return 0;
-        const ray = new THREE.Raycaster(
-            new THREE.Vector3(x3D, 20, z3D),
-            new THREE.Vector3(0, -1, 0)
-        );
-        const hits = ray.intersectObjects(this.surfaceMeshes, true);
-        return hits.length > 0 ? hits[0].point.y : 0;
+        if (this.surfaceMeshes.length === 0) {
+            console.log(`📍 No surface meshes registered yet for position (${x3D.toFixed(2)}, ${z3D.toFixed(2)})`);
+            return 0;
+        }
+
+        console.log(`🎯 Surface detection for position (${x3D.toFixed(2)}, ${z3D.toFixed(2)}) with ${this.surfaceMeshes.length} surfaces`);
+        
+        // Cast multiple rays in a small area to ensure we don't miss surfaces
+        const rayPoints = [
+            { x: x3D, z: z3D },
+            { x: x3D + 0.01, z: z3D },
+            { x: x3D - 0.01, z: z3D },
+            { x: x3D, z: z3D + 0.01 },
+            { x: x3D, z: z3D - 0.01 }
+        ];
+        
+        let bestHit = null;
+        let maxHeight = 0;
+        
+        for (const point of rayPoints) {
+            const ray = new THREE.Raycaster(
+                new THREE.Vector3(point.x, 20, point.z),
+                new THREE.Vector3(0, -1, 0)
+            );
+            
+            const hits = ray.intersectObjects(this.surfaceMeshes, true);
+            
+            // Find the highest surface hit
+            for (const hit of hits) {
+                if (hit.point.y > maxHeight) {
+                    maxHeight = hit.point.y;
+                    bestHit = hit;
+                }
+            }
+        }
+        
+        if (bestHit) {
+            const surfaceY = bestHit.point.y;
+            console.log(`✅ Found surface at height: ${surfaceY.toFixed(2)}m`);
+            return surfaceY;
+        }
+        
+        console.log(`❌ No surface found, using floor (0m)`);
+        return 0;
     }
 
     /**
@@ -244,12 +321,17 @@ class Room3DVisualizer {
 
     async buildFurniture() {
         const furnitureItems = this.layoutData.furniture;
-        if (!furnitureItems || furnitureItems.length === 0) return;
+        console.log(`🏗️ Building ${furnitureItems ? furnitureItems.length : 0} furniture items with enhanced surface snapping`);
+        
+        if (!furnitureItems || furnitureItems.length === 0) {
+            console.log('🚨 No furniture items found');
+            return;
+        }
 
         const roomWidthPx = this.layoutData.roomData.width * 80;
         const roomLengthPx = this.layoutData.roomData.length * 80;
 
-        // Two-phase placement: surface items (tables, desks…) are built first so
+        // Enhanced two-phase placement: surface items (tables, desks…) are built first so
         // their meshes are registered in this.surfaceMeshes before decor items
         // need to raycast against them.
         const phaseA = [], phaseB = [];
@@ -257,6 +339,10 @@ class Room3DVisualizer {
             const isDecor = this._isTableTopDecor(item.name) || this._isWallArt(item.name);
             (isDecor ? phaseB : phaseA).push({ item, index });
         });
+        
+        console.log(`🔄 Phase A (main furniture): ${phaseA.length} items`);
+        console.log(`🔄 Phase B (decor/wall-art): ${phaseB.length} items`);
+        console.log('🚧 Starting Phase A - main furniture placement...');
 
         const buildOne = ({ item, index }) => new Promise((resolve) => {
                 const displayW = item.displayWidth || item.originalWidth;
@@ -312,20 +398,29 @@ class Room3DVisualizer {
                                 );
                             }
 
-                            // Apply surface snapping based on item type
+                            // Apply enhanced surface snapping based on item type
                             const scaledBox = new THREE.Box3().setFromObject(modelRoot);
+                            const itemHeight = scaledBox.max.y - scaledBox.min.y;
+                            
+                            console.log(`🏗️ Placing 3D model "${item.name}" at (${x3D.toFixed(2)}, ${z3D.toFixed(2)})`);
+                            
                             if (this._isWallArt(item.name)) {
                                 const wp = this._getWallPlacement(x3D, z3D);
                                 modelRoot.position.set(wp.x, wp.y, wp.z);
                                 modelRoot.rotation.y = wp.rotY;
+                                console.log(`🖼️ Wall art placed at (${wp.x.toFixed(2)}, ${wp.y.toFixed(2)}, ${wp.z.toFixed(2)})`);
                             } else if (this._isTableTopDecor(item.name)) {
                                 const surfaceY = this._findSurfaceHeightBelow(x3D, z3D);
-                                modelRoot.position.set(x3D, surfaceY + (-scaledBox.min.y), z3D);
+                                const finalY = surfaceY + (-scaledBox.min.y);
+                                modelRoot.position.set(x3D, finalY, z3D);
                                 modelRoot.rotation.y = rotationY;
+                                console.log(`🎯 Table-top decor placed at surface height: ${finalY.toFixed(2)}m`);
                             } else {
                                 // Default: sit the model exactly on the floor.
-                                modelRoot.position.set(x3D, -scaledBox.min.y, z3D);
+                                const floorY = -scaledBox.min.y;
+                                modelRoot.position.set(x3D, floorY, z3D);
                                 modelRoot.rotation.y = rotationY;
+                                console.log(`🏠 Floor item placed at: ${floorY.toFixed(2)}m`);
                             }
 
                             // Tag for raycaster selection (Phase 4)
@@ -340,10 +435,13 @@ class Room3DVisualizer {
                             });
 
                             this.scene.add(modelRoot);
+                            
                             // Register as snappable surface for later decor items
                             if (this._isSurfaceItem(item.name)) {
                                 this.surfaceMeshes.push(modelRoot);
+                                console.log(`📦 Registered "${item.name}" as surface. Total surfaces: ${this.surfaceMeshes.length}`);
                             }
+                            
                             resolve();
                         },
                         undefined,
@@ -363,7 +461,15 @@ class Room3DVisualizer {
         // Phase A (main furniture) must complete before Phase B (decor/wall-art)
         // so surface meshes are registered before snapping is attempted.
         await Promise.all(phaseA.map(buildOne));
+        console.log(`✅ Phase A complete. ${this.surfaceMeshes.length} surfaces registered.`);
+        
+        console.log('🚧 Starting Phase B - decor/wall-art placement with surface snapping...');
         await Promise.all(phaseB.map(buildOne));
+        console.log('✅ Phase B complete. All furniture placed with surface snapping.');
+        
+        console.log(`🏁 Final summary: ${furnitureItems.length} items placed, ${this.surfaceMeshes.length} surfaces available for snapping`);
+        
+        console.log(`🏁 Final summary: ${furnitureItems.length} items placed, ${this.surfaceMeshes.length} surfaces available for snapping`);
     }
 
     addPlaceholderBox(item, index, x3D, z3D, wMeters, hMeters, dMeters, rotationY) {
@@ -375,18 +481,25 @@ class Room3DVisualizer {
             metalness: 0.1
         });
         const mesh = new THREE.Mesh(geo, mat);
-        // Apply surface snapping
+        // Apply enhanced surface snapping for placeholder boxes
+        console.log(`🎁 Placing placeholder box "${item.name}" at (${x3D.toFixed(2)}, ${z3D.toFixed(2)})`);
+        
         if (this._isWallArt(item.name)) {
             const wp = this._getWallPlacement(x3D, z3D);
             mesh.position.set(wp.x, wp.y, wp.z);
             mesh.rotation.y = wp.rotY;
+            console.log(`🖼️ Wall art placeholder placed at (${wp.x.toFixed(2)}, ${wp.y.toFixed(2)}, ${wp.z.toFixed(2)})`);
         } else if (this._isTableTopDecor(item.name)) {
             const surfaceY = this._findSurfaceHeightBelow(x3D, z3D);
-            mesh.position.set(x3D, surfaceY + hMeters / 2, z3D);
+            const finalY = surfaceY + hMeters / 2;
+            mesh.position.set(x3D, finalY, z3D);
             mesh.rotation.y = rotationY;
+            console.log(`🎯 Table-top decor placeholder placed at surface height: ${finalY.toFixed(2)}m`);
         } else {
-            mesh.position.set(x3D, hMeters / 2, z3D);
+            const floorY = hMeters / 2;
+            mesh.position.set(x3D, floorY, z3D);
             mesh.rotation.y = rotationY;
+            console.log(`🏠 Floor placeholder placed at: ${floorY.toFixed(2)}m`);
         }
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -394,67 +507,285 @@ class Room3DVisualizer {
         mesh.userData.originalColor = mat.color.clone();
         this.scene.add(mesh);
         this.furnitureObjects[index] = mesh;   // register
+        
         // Register as snappable surface for later decor items
         if (this._isSurfaceItem(item.name)) {
             this.surfaceMeshes.push(mesh);
+            console.log(`📦 Registered placeholder "${item.name}" as surface. Total surfaces: ${this.surfaceMeshes.length}`);
         }
     }
 
-    // ── Phase 4: Selection & Rotation ──────────────────────────────────────
-    setupSelectionAndRotation() {
-        // Click to select furniture
-        this.renderer.domElement.addEventListener('click', (event) => {
-            // Only process if OrbitControls did not consume a drag click
-            if (this.controls.enabled && this._isDragging) return;
-
-            const rect = this.renderer.domElement.getBoundingClientRect();
-            const mouse = new THREE.Vector2(
-                ((event.clientX - rect.left) / rect.width) * 2 - 1,
-                -((event.clientY - rect.top) / rect.height) * 2 + 1
-            );
-
-            this.raycaster.setFromCamera(mouse, this.camera);
-            const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-
-            let hit = null;
-            for (const i of intersects) {
-                // Walk up the parent chain to find an object tagged with furnitureIndex
-                let obj = i.object;
-                while (obj) {
-                    if (obj.userData && obj.userData.furnitureIndex !== undefined) {
-                        hit = obj; break;
-                    }
-                    obj = obj.parent;
+    // ── Enhanced Phase 4: Selection, Movement & Rotation ──────────────────────────────────────
+    
+    setupSelectionAndMovement() {
+        // Mouse events for object selection and movement
+        this.renderer.domElement.addEventListener('mousedown', (event) => this.onMouseDown(event));
+        this.renderer.domElement.addEventListener('mousemove', (event) => this.onMouseMove(event));
+        this.renderer.domElement.addEventListener('mouseup', (event) => this.onMouseUp(event));
+        
+        // Mouse hover effects for better UX
+        this.renderer.domElement.addEventListener('mousemove', (event) => this.updateCursor(event));
+        
+        // Track drag start to avoid treating drags as clicks
+        this._isDragging = false;
+        
+        console.log('🎮 Enhanced 3D move controls initialized');
+    }
+    
+    onMouseDown(event) {
+        event.preventDefault();
+        this._isDragging = false;
+        
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+            ((event.clientX - rect.left) / rect.width) * 2 - 1,
+            -((event.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        
+        this.raycaster.setFromCamera(mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+        
+        let hit = null;
+        for (const i of intersects) {
+            // Walk up the parent chain to find an object tagged with furnitureIndex
+            let obj = i.object;
+            while (obj) {
+                if (obj.userData && obj.userData.furnitureIndex !== undefined) {
+                    hit = obj; break;
                 }
-                if (hit) break;
+                obj = obj.parent;
             }
-
+            if (hit) break;
+        }
+        
+        if (hit) {
             // Deselect previous
+            if (this.selectedObject && this.selectedObject !== hit) {
+                this._setHighlight(this.selectedObject, false);
+            }
+            
+            // Select new object
+            this.selectedObject = hit;
+            this.selectedIndex = hit.userData.furnitureIndex;
+            this._setHighlight(hit, true);
+            document.getElementById('rotationPanel').style.display = 'flex';
+            this._updateAngleDisplay();            this._updateSelectedObjectName();            
+            // Setup for potential dragging
+            this.setupDragOperation(hit, intersects[0].point);
+            
+            console.log(`🎯 Selected: "${this.layoutData.furniture[this.selectedIndex]?.name}"`);
+        } else {
+            // Deselect all
             if (this.selectedObject) {
                 this._setHighlight(this.selectedObject, false);
             }
-
-            if (hit) {
-                this.selectedObject = hit;
-                this.selectedIndex = hit.userData.furnitureIndex;
-                this._setHighlight(hit, true);
-                document.getElementById('rotationPanel').style.display = 'flex';
-                this._updateAngleDisplay();
-            } else {
-                this.selectedObject = null;
-                this.selectedIndex = -1;
-                document.getElementById('rotationPanel').style.display = 'none';
+            this.selectedObject = null;
+            this.selectedIndex = -1;
+            document.getElementById('rotationPanel').style.display = 'none';
+            this._updateSelectedObjectName();
+        }
+    }
+    
+    setupDragOperation(object, intersectionPoint) {
+        // Calculate drag offset
+        this.dragOffset.copy(intersectionPoint).sub(object.position);
+        
+        // Create drag plane at object height, parallel to ground
+        this.dragPlane.setFromNormalAndCoplanarPoint(
+            new THREE.Vector3(0, 1, 0),
+            object.position
+        );
+        
+        // Create visual helper for movement
+        this.createMoveHelper(object.position);
+    }
+    
+    onMouseMove(event) {
+        if (!this.selectedObject) return;
+        
+        this._isDragging = true;
+        
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+            ((event.clientX - rect.left) / rect.width) * 2 - 1,
+            -((event.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        
+        this.raycaster.setFromCamera(mouse, this.camera);
+        
+        // Calculate new position based on drag plane intersection
+        if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
+            const newPosition = this.dragIntersection.sub(this.dragOffset);
+            
+            // Apply boundary constraints (keep within room)
+            const room = this.layoutData.roomData;
+            const halfWidth = room.width / 2;
+            const halfLength = room.length / 2;
+            
+            newPosition.x = Math.max(-halfWidth + 0.2, Math.min(halfWidth - 0.2, newPosition.x));
+            newPosition.z = Math.max(-halfLength + 0.2, Math.min(halfLength - 0.2, newPosition.z));
+            
+            // Apply real-time surface snapping
+            const itemName = this.layoutData.furniture[this.selectedIndex]?.name || '';
+            const snappedY = this.calculateSnappedHeight(newPosition.x, newPosition.z, itemName, this.selectedObject);
+            
+            // Add subtle visual feedback when snapping occurs
+            if (Math.abs(this.selectedObject.position.y - snappedY) > 0.1) {
+                console.log(`✨ Surface snap: ${this.selectedObject.position.y.toFixed(2)}m → ${snappedY.toFixed(2)}m`);
             }
-        });
-
-        // Track drag start to avoid treating drags as clicks
+            
+            // Update object position with snapping
+            this.selectedObject.position.set(newPosition.x, snappedY, newPosition.z);
+            
+            // Update move helper
+            if (this.moveHelper) {
+                this.moveHelper.position.copy(this.selectedObject.position);
+                this.moveHelper.position.y += 0.05; // Slightly above object
+            }
+            
+            this.isDraggingObject = true;
+            
+            // Disable orbit controls during drag
+            this.controls.enabled = false;
+        }
+    }
+    
+    onMouseUp(event) {
+        if (this.isDraggingObject && this.selectedObject) {
+            // Finalize move operation
+            this.finalizeMoveOperation();
+            console.log(`🎯 Moved "${this.layoutData.furniture[this.selectedIndex]?.name}" to new position`);
+        }
+        
+        // Re-enable orbit controls
+        this.controls.enabled = true;
+        this.isDraggingObject = false;
         this._isDragging = false;
-        this.renderer.domElement.addEventListener('mousedown', () => { this._isDragging = false; });
-        this.renderer.domElement.addEventListener('mousemove', () => { this._isDragging = true; });
-
+        
+        // Remove move helper
+        this.removeMoveHelper();
+    }
+    
+    calculateSnappedHeight(x, z, itemName, object) {
+        // Get bounding box for proper height calculation
+        const box = new THREE.Box3().setFromObject(object);
+        const itemHeight = box.max.y - box.min.y;
+        
+        if (this._isWallArt(itemName)) {
+            const wp = this._getWallPlacement(x, z);
+            return wp.y;
+        } else if (this._isTableTopDecor(itemName)) {
+            const surfaceY = this._findSurfaceHeightBelow(x, z);
+            return surfaceY + (-box.min.y); // Place bottom of object on surface
+        } else {
+            return -box.min.y; // Place on floor
+        }
+    }
+    
+    createMoveHelper(position) {
+        // Create a subtle visual indicator for movement
+        const geometry = new THREE.RingGeometry(0.2, 0.25, 16);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+        
+        this.moveHelper = new THREE.Mesh(geometry, material);
+        this.moveHelper.position.copy(position);
+        this.moveHelper.position.y += 0.05;
+        this.moveHelper.rotation.x = -Math.PI / 2; // Lay flat
+        
+        this.scene.add(this.moveHelper);
+    }
+    
+    removeMoveHelper() {
+        if (this.moveHelper) {
+            this.scene.remove(this.moveHelper);
+            this.moveHelper.geometry.dispose();
+            this.moveHelper.material.dispose();
+            this.moveHelper = null;
+        }
+    }
+    
+    finalizeMoveOperation() {
+        if (!this.selectedObject || this.selectedIndex === -1) return;
+        
+        // Update the furniture data with new position
+        const furniture = this.layoutData.furniture[this.selectedIndex];
+        const newPos = this.selectedObject.position;
+        
+        // Convert 3D position back to 2D editor coordinates
+        const roomWidthPx = this.layoutData.roomData.width * 80;
+        const roomLengthPx = this.layoutData.roomData.length * 80;
+        
+        const relativeX = newPos.x / this.pixelToMeterRatio;
+        const relativeY = newPos.z / this.pixelToMeterRatio;
+        
+        const centreRelativeXPx = relativeX + (roomWidthPx / 2);
+        const centreRelativeYPx = relativeY + (roomLengthPx / 2);
+        
+        // Update furniture position (accounting for object center to top-left conversion)
+        const displayW = furniture.displayWidth || furniture.originalWidth;
+        const displayH = furniture.displayHeight || furniture.originalHeight;
+        
+        furniture.x = centreRelativeXPx - (displayW * furniture.scaleX) / 2;
+        furniture.y = centreRelativeYPx - (displayH * furniture.scaleY) / 2;
+        
+        // Update session storage so 2D editor stays in sync
+        this.layoutData.furnitureItems = this.layoutData.furniture;
+        sessionStorage.setItem('currentLayout', JSON.stringify(this.layoutData));
+        
+        console.log(`💾 Updated furniture position: (${furniture.x.toFixed(1)}, ${furniture.y.toFixed(1)})`);
+    }
+    
+    setupRotationButtons() {
         // Rotation buttons
         document.getElementById('rotateLeftBtn')?.addEventListener('click', () => this.rotateSelected(+15));
         document.getElementById('rotateRightBtn')?.addEventListener('click', () => this.rotateSelected(-15));
+    }
+    
+    _updateSelectedObjectName() {
+        const nameElement = document.getElementById('selectedObjectName');
+        if (nameElement) {
+            if (this.selectedObject && this.selectedIndex >= 0) {
+                const furniture = this.layoutData.furniture[this.selectedIndex];
+                nameElement.textContent = furniture?.name || 'Unknown Object';
+            } else {
+                nameElement.textContent = 'No object selected';
+            }
+        }
+    }
+    
+    updateCursor(event) {
+        // Don't change cursor while dragging
+        if (this.isDraggingObject) return;
+        
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+            ((event.clientX - rect.left) / rect.width) * 2 - 1,
+            -((event.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        
+        this.raycaster.setFromCamera(mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+        
+        let hovering = false;
+        for (const i of intersects) {
+            let obj = i.object;
+            while (obj) {
+                if (obj.userData && obj.userData.furnitureIndex !== undefined) {
+                    hovering = true;
+                    break;
+                }
+                obj = obj.parent;
+            }
+            if (hovering) break;
+        }
+        
+        // Update cursor based on hover state
+        this.renderer.domElement.style.cursor = hovering ? 'move' : 'default';
     }
 
     _setHighlight(obj, on) {
