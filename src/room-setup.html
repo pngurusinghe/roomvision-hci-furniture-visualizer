@@ -1,75 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Setup - RoomVision</title>
-    <link rel="stylesheet" href="../css/room.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: "#eff6ff", 100: "#dbeafe", 500: "#3b82f6", 600: "#2563eb", 900: "#1e3a8a" },
-                        accent: { 500: "#8b5cf6", 600: "#7c3aed" }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="/css/room.css">
 </head>
-
 <body>
     <!-- Navigation Header -->
-    <nav
-        class="fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 z-50 shadow-sm transition-all antialiased">
-        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-            <div class="flex items-center gap-8">
-                <button onclick="window.location.href='home.html'"
-                    class="flex items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity focus:outline-none">
-                    <div
-                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-md">
-                        <svg class="w-5 h-5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+    <header class="app-header">
+        <div class="header-container">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <defs>
+                                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <rect width="40" height="40" rx="10" fill="url(#logoGradient)"/>
+                            <path d="M20 12L27 18H24V26H16V18H13L20 12Z" fill="white"/>
+                            <circle cx="20" cy="32" r="2" fill="white" opacity="0.6"/>
                         </svg>
                     </div>
-                    <span
-                        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-accent-600">RoomVision</span>
-                </button>
-                <div class="w-px h-6 bg-slate-200 mx-1"></div>
-
-                <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 shadow-inner">
-                    <a href="room-setup.html"
-                        class="px-4 py-1.5 text-sm font-semibold rounded-md bg-white text-brand-600 shadow-sm ring-1 ring-slate-200 transition-all">Room
-                        Setup</a>
-                    <a href="editor-2d.html"
-                        class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">2D
-                        Editor</a>
-                    <a href="view-3d.html"
-                        class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">3D
-                        View</a>
+                    <span class="logo-text">RoomVision</span>
+                    <span class="stats-badge">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <path d="M6 1l1.5 3 3.5.5-2.5 2.5.5 3.5L6 9l-3 1.5.5-3.5L1 4.5l3.5-.5z"/>
+                        </svg>
+                        Beta
+                    </span>
                 </div>
             </div>
-
-            <div class="flex items-center gap-3">
-                <button
-                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 hover:bg-slate-50 hover:text-brand-600 transition-all shadow-sm"
-                    onclick="window.location.href='projects.html'">
-                    📁 My Projects
-                </button>
-                <div class="w-px h-6 bg-slate-200 mx-2"></div>
-                <button
-                    class="px-3 py-1.5 text-sm font-semibold text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                    id="logoutBtn"
-                    onclick="const auth = window.firebaseAuth || window.firebase?.auth(); if(auth) auth.signOut().then(() => { window.location.href = 'index.html'; });">
-                    Logout
-                </button>
+            <nav class="header-nav">
+                <a href="room-setup.html" class="nav-link active"><span>Room Setup</span></a>
+                <a href="editor-2d.html" class="nav-link"><span>2D Editor</span></a>
+                <a href="view-3d.html" class="nav-link"><span>3D View</span></a>
+                <a href="manage-designs.html" class="nav-link"><span>Save & Manage</span></a>
+            </nav>
+            <div class="header-right">
+                <div class="theme-toggle-wrapper">
+                    <span class="theme-label">Theme</span>
+                    <div class="theme-toggle" id="themeToggle">
+                        <div class="theme-toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="user-info" id="userInfo">
+                    <a href="projects.html" class="my-projects-btn" title="Back to My Projects">📁 My Projects</a>
+                </div>
             </div>
-    </nav>
+        </div>
+    </header>
 
     <main class="room-setup-container">
         <!-- Breadcrumb -->
@@ -87,14 +70,13 @@
 
         <!-- Main Form Container -->
         <form id="roomSetupForm" class="room-form" novalidate>
-
+            
             <!-- Room Dimensions Section -->
             <section class="form-section">
                 <div class="section-header">
-                    <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor">
-                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
-                        <path d="M3 9h18M9 3v18" stroke-width="2" />
+                    <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                        <path d="M3 9h18M9 3v18" stroke-width="2"/>
                     </svg>
                     <h2>Room Dimensions</h2>
                 </div>
@@ -117,8 +99,18 @@
                     <div class="input-group">
                         <label for="roomWidth" class="input-label">Width (m)</label>
                         <div class="input-wrapper">
-                            <input type="number" id="roomWidth" name="width" class="dimension-input" placeholder="4.0"
-                                min="2" max="20" step="0.1" required aria-describedby="widthError">
+                            <input 
+                                type="number" 
+                                id="roomWidth" 
+                                name="width" 
+                                class="dimension-input"
+                                placeholder="4.0"
+                                min="2"
+                                max="20"
+                                step="0.1"
+                                required
+                                aria-describedby="widthError"
+                            >
                             <span class="input-unit">m</span>
                         </div>
                         <span class="error-message" id="widthError" role="alert"></span>
@@ -127,8 +119,18 @@
                     <div class="input-group">
                         <label for="roomLength" class="input-label">Length (m)</label>
                         <div class="input-wrapper">
-                            <input type="number" id="roomLength" name="length" class="dimension-input" placeholder="5.0"
-                                min="2" max="20" step="0.1" required aria-describedby="lengthError">
+                            <input 
+                                type="number" 
+                                id="roomLength" 
+                                name="length" 
+                                class="dimension-input"
+                                placeholder="5.0"
+                                min="2"
+                                max="20"
+                                step="0.1"
+                                required
+                                aria-describedby="lengthError"
+                            >
                             <span class="input-unit">m</span>
                         </div>
                         <span class="error-message" id="lengthError" role="alert"></span>
@@ -136,12 +138,21 @@
 
                     <div class="input-group">
                         <label for="roomHeight" class="input-label">
-                            Height (m)
+                            Height (m) 
                             <span class="optional-label">Optional</span>
                         </label>
                         <div class="input-wrapper">
-                            <input type="number" id="roomHeight" name="height" class="dimension-input" placeholder="2.8"
-                                min="2" max="6" step="0.1" aria-describedby="heightError">
+                            <input 
+                                type="number" 
+                                id="roomHeight" 
+                                name="height" 
+                                class="dimension-input"
+                                placeholder="2.8"
+                                min="2"
+                                max="6"
+                                step="0.1"
+                                aria-describedby="heightError"
+                            >
                             <span class="input-unit">m</span>
                         </div>
                         <span class="error-message" id="heightError" role="alert"></span>
@@ -151,8 +162,7 @@
                 <!-- Real-time Preview Info Box -->
                 <div class="info-box" id="previewInfo" role="status" aria-live="polite">
                     <svg class="info-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path
-                            d="M10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z" />
+                        <path d="M10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/>
                     </svg>
                     <div class="info-content">
                         <span id="previewText">Enter dimensions to see room details</span>
@@ -167,7 +177,7 @@
                             <input type="radio" name="shape" value="rectangular" checked>
                             <span class="shape-card">
                                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor">
-                                    <rect x="8" y="12" width="24" height="16" stroke-width="2" />
+                                    <rect x="8" y="12" width="24" height="16" stroke-width="2"/>
                                 </svg>
                                 <span>Rectangular</span>
                             </span>
@@ -176,7 +186,7 @@
                             <input type="radio" name="shape" value="square">
                             <span class="shape-card">
                                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor">
-                                    <rect x="10" y="10" width="20" height="20" stroke-width="2" />
+                                    <rect x="10" y="10" width="20" height="20" stroke-width="2"/>
                                 </svg>
                                 <span>Square</span>
                             </span>
@@ -188,11 +198,8 @@
             <!-- Color Scheme Section -->
             <section class="form-section">
                 <div class="section-header">
-                    <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor">
-                        <path
-                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"
-                            stroke-width="2" />
+                    <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" stroke-width="2"/>
                     </svg>
                     <h2>Color Scheme</h2>
                 </div>
@@ -203,8 +210,7 @@
                     <div class="color-palette" role="radiogroup" aria-label="Wall color selection">
                         <label class="color-option">
                             <input type="radio" name="wallColor" value="#FFFFFF" checked>
-                            <span class="color-swatch" style="background-color: #FFFFFF; border: 2px solid #e5e7eb;"
-                                title="Pure White"></span>
+                            <span class="color-swatch" style="background-color: #FFFFFF; border: 2px solid #e5e7eb;" title="Pure White"></span>
                             <span class="color-name">Pure White</span>
                         </label>
                         <label class="color-option">
@@ -250,9 +256,7 @@
                         <!-- Custom color picker -->
                         <label class="color-option">
                             <input type="color" name="wallColor" id="wallColorPicker" value="#FFFFFF">
-                            <span class="color-swatch" id="wallColorPreview"
-                                style="background-color: #FFFFFF; border: 2px solid #e5e7eb;"
-                                title="Custom color"></span>
+                            <span class="color-swatch" id="wallColorPreview" style="background-color: #FFFFFF; border: 2px solid #e5e7eb;" title="Custom color"></span>
                             <span class="color-name">Custom</span>
                         </label>
                     </div>
@@ -299,8 +303,7 @@
                         </label>
                         <label class="color-option">
                             <input type="color" name="floorColor" id="floorColorPicker" value="#F5DEB3">
-                            <span class="color-swatch" id="floorColorPreview" style="background-color: #F5DEB3;"
-                                title="Custom floor"></span>
+                            <span class="color-swatch" id="floorColorPreview" style="background-color: #F5DEB3;" title="Custom floor"></span>
                             <span class="color-name">Custom</span>
                         </label>
                     </div>
@@ -310,9 +313,8 @@
             <!-- Room Type Section -->
             <section class="form-section">
                 <div class="section-header">
-                    <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-width="2" />
+                    <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-width="2"/>
                     </svg>
                     <h2>Room Type</h2>
                 </div>
@@ -322,7 +324,7 @@
                         <input type="radio" name="roomType" value="living-room" checked>
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M8 28h32v8H8zm4-12h24v8H12zm-4 16h32v4H8z" />
+                                <path d="M8 28h32v8H8zm4-12h24v8H12zm-4 16h32v4H8z"/>
                             </svg>
                             <span class="room-type-name">Living Room</span>
                         </span>
@@ -332,7 +334,7 @@
                         <input type="radio" name="roomType" value="bedroom">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M10 32h28v-8H10v8zm0-12h28v-4H10v4zm-2 16h32v4H8v-4z" />
+                                <path d="M10 32h28v-8H10v8zm0-12h28v-4H10v4zm-2 16h32v4H8v-4z"/>
                             </svg>
                             <span class="room-type-name">Bedroom</span>
                         </span>
@@ -342,7 +344,7 @@
                         <input type="radio" name="roomType" value="dining-room">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M18 26h12v-4H18v4zm-2-8h16v-2H16v2zm-4 12h24v2H12v-2z" />
+                                <path d="M18 26h12v-4H18v4zm-2-8h16v-2H16v2zm-4 12h24v2H12v-2z"/>
                             </svg>
                             <span class="room-type-name">Dining Room</span>
                         </span>
@@ -352,17 +354,17 @@
                         <input type="radio" name="roomType" value="office">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M14 18h20v-2H14v2zm0 6h20v-2H14v2zm0 6h14v-2H14v2z" />
+                                <path d="M14 18h20v-2H14v2zm0 6h20v-2H14v2zm0 6h14v-2H14v2z"/>
                             </svg>
                             <span class="room-type-name">Office</span>
                         </span>
                     </label>
-
+                    
                     <label class="room-type-card">
                         <input type="radio" name="roomType" value="kitchen">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M8 30h32v4H8zm6-12h20v8H14zM10 10h28v6H10z" />
+                                <path d="M8 30h32v4H8zm6-12h20v8H14zM10 10h28v6H10z"/>
                             </svg>
                             <span class="room-type-name">Kitchen</span>
                         </span>
@@ -372,7 +374,7 @@
                         <input type="radio" name="roomType" value="bathroom">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M12 30h24v6H12zM20 18h8v6h-8zM14 6h20v8H14z" />
+                                <path d="M12 30h24v6H12zM20 18h8v6h-8zM14 6h20v8H14z"/>
                             </svg>
                             <span class="room-type-name">Bathroom</span>
                         </span>
@@ -382,7 +384,7 @@
                         <input type="radio" name="roomType" value="study">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M8 34h32v4H8zM12 10h24v18H12zM14 12v14" />
+                                <path d="M8 34h32v4H8zM12 10h24v18H12zM14 12v14"/>
                             </svg>
                             <span class="room-type-name">Study</span>
                         </span>
@@ -392,7 +394,7 @@
                         <input type="radio" name="roomType" value="kids-room">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M10 30h28v6H10zM12 12h24v12H12z" />
+                                <path d="M10 30h28v6H10zM12 12h24v12H12z"/>
                             </svg>
                             <span class="room-type-name">Kids Room</span>
                         </span>
@@ -402,7 +404,7 @@
                         <input type="radio" name="roomType" value="guest-room">
                         <span class="room-type-content">
                             <svg class="room-icon" width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
-                                <path d="M8 30h32v6H8zM10 14h28v10H10z" />
+                                <path d="M8 30h32v6H8zM10 14h28v10H10z"/>
                             </svg>
                             <span class="room-type-name">Guest Room</span>
                         </span>
@@ -414,7 +416,7 @@
             <div class="form-actions">
                 <button type="button" class="btn-secondary" id="backBtn">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-                        <path d="M15 10H5M5 10l5 5M5 10l5-5" stroke-width="2" />
+                        <path d="M15 10H5M5 10l5 5M5 10l5-5" stroke-width="2"/>
                     </svg>
                     <span>Back</span>
                 </button>
@@ -425,7 +427,7 @@
                     <button type="submit" class="btn-primary" id="continueBtn" disabled>
                         <span>Continue to Furniture Shopping</span>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-                            <path d="M5 10h10M10 5l5 5-5 5" stroke-width="2" />
+                            <path d="M5 10h10M10 5l5 5-5 5" stroke-width="2"/>
                         </svg>
                     </button>
                 </div>
@@ -443,18 +445,15 @@
     <script type="module">
         import { auth } from './js/firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-
+        
         // Check authentication status
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 // User not logged in, redirect to login
                 window.location.href = 'index.html';
             } else {
-                // Display user name (prefer displayName) - only if element exists
-                const userNameElement = document.getElementById('userName');
-                if (userNameElement) {
-                    userNameElement.textContent = user.displayName || user.email || 'User';
-                }
+                // Display user name (prefer displayName)
+                document.getElementById('userName').textContent = user.displayName || user.email || 'User';
             }
         });
 
@@ -464,5 +463,4 @@
     <!-- Room Setup Module -->
     <script type="module" src="js/room.js"></script>
 </body>
-
 </html>
