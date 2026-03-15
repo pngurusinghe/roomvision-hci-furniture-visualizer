@@ -190,15 +190,22 @@ class RoomEditor2D {
             };
 
             if (!hasSessionState) {
+                // AGGRESSIVE LOAD: Always check sub-collection first, regardless of flags
                 this.furnitureState = [];
-                if (data.layout && data.layout.furnitureRefs) {
+                try {
                     const furnColl = collection(db, `projects/${this.projectId}/rooms/${this.roomId}/furniture`);
                     const fSnap = await getDocs(furnColl);
-                    fSnap.forEach(d => {
-                        this.furnitureState.push({ ...d.data(), firestoreId: d.id });
-                    });
-                } else if (data.layout && data.layout.furniture) {
-                    this.furnitureState = data.layout.furniture;
+                    if (!fSnap.empty) {
+                        fSnap.forEach(d => {
+                            this.furnitureState.push({ ...d.data(), firestoreId: d.id });
+                        });
+                        console.log(`✅ Loaded ${this.furnitureState.length} items from sub-collection.`);
+                    } else if (data.layout && data.layout.furniture) {
+                        // Fallback to legacy inline furniture
+                        this.furnitureState = data.layout.furniture;
+                    }
+                } catch (e) {
+                    console.error("Error during aggressive furniture fetch:", e);
                 }
             }
         } else if (this.roomId) {
@@ -244,6 +251,13 @@ class RoomEditor2D {
 
         // 2. Cart Merge: Append any brand new items selected from the shop
         this.mergeCartItems();
+
+        // 3. Numerical Robustness: Ensure dimensions are numeric for math calculations
+        if (this.roomData) {
+            this.roomData.width = parseFloat(this.roomData.width) || 5;
+            this.roomData.length = parseFloat(this.roomData.length) || 4;
+            this.roomData.height = parseFloat(this.roomData.height) || 2.8;
+        }
 
         console.log("✅ State loaded:", this.roomData, this.furnitureState);
         this.updateRoomInfoUI();
@@ -460,6 +474,11 @@ class RoomEditor2D {
                 scaleY: itemState.scaleY || 1,
                 draggable: true, // STEP 3: Make interactive
                 dragBoundFunc: (pos) => {
+                    // INDUSTRY STANDARD FIX: Convert absolute screen points to local stage points to handle Zoom/Pan
+                    const stage = this.stage;
+                    const transform = stage.getAbsoluteTransform().copy().invert();
+                    const localPos = transform.point(pos);
+
                     // Calculate the real visual extent of the object including its current rotation
                     const w = (itemState.displayWidth || itemState.originalWidth || 100) * (itemState.scaleX || 1);
                     const h = (itemState.displayHeight || itemState.originalHeight || 100) * (itemState.scaleY || 1);
@@ -474,10 +493,11 @@ class RoomEditor2D {
                     const minY = this.roomOriginY + (boundingH / 2);
                     const maxY = this.roomOriginY + (this.roomData.length * this.PIXELS_PER_METER) - (boundingH / 2);
 
-                    return {
-                        x: Math.max(minX, Math.min(maxX, pos.x)),
-                        y: Math.max(minY, Math.min(maxY, pos.y))
-                    };
+                    const clampedLocalX = Math.max(minX, Math.min(maxX, localPos.x));
+                    const clampedLocalY = Math.max(minY, Math.min(maxY, localPos.y));
+
+                    // Return absolute point for Konva
+                    return stage.getAbsoluteTransform().point({ x: clampedLocalX, y: clampedLocalY });
                 }
             });
 

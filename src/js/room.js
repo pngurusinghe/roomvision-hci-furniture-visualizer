@@ -34,6 +34,12 @@ const roomState = {
             roomState.projectId = pid;
             console.log('📂 Room setup opened for project:', pid);
             
+            // Update header navigation to link back to project details
+            const navProjectDetails = document.getElementById('navProjectDetails');
+            if (navProjectDetails) {
+                navProjectDetails.href = `project-details.html?projectId=${pid}`;
+            }
+
             // Update breadcrumb to link back to project details
             const breadcrumbLink = document.getElementById('breadcrumbProjectsLink');
             const breadcrumbProject = document.getElementById('breadcrumbProject');
@@ -44,6 +50,10 @@ const roomState = {
             if (breadcrumbProject) {
                 breadcrumbProject.textContent = 'New Room';
             }
+        } else {
+            // Hide project details link if no project context
+            const navProjectDetails = document.getElementById('navProjectDetails');
+            if (navProjectDetails) navProjectDetails.style.display = 'none';
         }
     } catch (e) {
         console.error('Error capturing project context:', e);

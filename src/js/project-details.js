@@ -109,26 +109,46 @@ function loadRooms() {
  * Supports both the new sub-collection format (furnitureRefs) and the legacy
  * inline format (layout.furniture[]).
  */
-async function loadRoomFurniture(room) {
-    // New path: furniture stored in Firestore sub-collection
-    if (room.layout && room.layout.furnitureRefs && Array.isArray(room.layout.furnitureRefs)) {
+async function loadRoomFurniture(room, isRetry = false) {
+    if (!room || !room.id) return [];
+
+    // Path 1: Check project-bound sub-collection (Most robust for current architecture)
+    if (currentProjectId) {
         try {
-            const furnitureCollectionRef = collection(
-                db, `projects/${currentProjectId}/rooms/${room.id}/furniture`
-            );
-            const snap = await getDocs(furnitureCollectionRef);
-            const items = [];
-            snap.forEach(d => items.push({ ...d.data(), firestoreId: d.id }));
-            return items;
+            const furnColl = collection(db, `projects/${currentProjectId}/rooms/${room.id}/furniture`);
+            const snap = await getDocs(furnColl);
+            if (!snap.empty) {
+                const items = [];
+                snap.forEach(d => items.push({ ...d.data(), firestoreId: d.id }));
+                return items;
+            }
         } catch (e) {
-            console.error('Error fetching furniture sub-collection for room', room.id, e);
-            return [];
+            console.warn('Sub-collection fetch failed for room', room.id, e);
         }
     }
 
-    // Legacy path: furniture data stored directly in layout
-    if (room.layout && Array.isArray(room.layout.furniture)) {
-        return room.layout.furniture;
+    // Path 2: Check standalone rooms sub-collection (Fallback)
+    try {
+        const standaloneColl = collection(db, `rooms/${room.id}/furniture`);
+        const snap = await getDocs(standaloneColl);
+        if (!snap.empty) {
+            const items = [];
+            snap.forEach(d => items.push({ ...d.data(), firestoreId: d.id }));
+            return items;
+        }
+    } catch (e) { /* ignore fallback errors */ }
+
+    // Path 3: Legacy path for inline furniture data
+    if (room.layout) {
+        if (Array.isArray(room.layout.furniture)) return room.layout.furniture;
+        if (Array.isArray(room.furniture)) return room.furniture;
+    }
+
+    // RETRY LOGIC: If still empty and not already a retry, wait 500ms and try again
+    // This helps handle Firestore's eventual consistency for brand new designs.
+    if (!isRetry) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return loadRoomFurniture(room, true);
     }
 
     return [];
@@ -198,10 +218,13 @@ async function renderRooms(rooms) {
         `;
         roomsList.appendChild(card);
 
-        // Render the Konva preview after adding to DOM, passing resolved furniture
-        setTimeout(() => renderRoomPreview(room, containerId, furnitureList), 50);
+        // Render the Konva preview after adding to DOM, passing resolved furniture.
+        // We use a slightly longer delay and requestAnimationFrame to ensure the 
+        // container width/height are accurately calculated for large rooms.
+        setTimeout(() => {
+            requestAnimationFrame(() => renderRoomPreview(room, containerId, furnitureList));
+        }, 100);
     });
-
 }
 
 // Navigation handlers
@@ -282,101 +305,98 @@ function loadFurnitureImage(imageUrl, fData, furnGroup, layer) {
  * Render a mini Konva map for a given room.
  * @param {Object}  room          - Room data from Firestore
  * @param {string}  containerId   - DOM element ID for the Konva stage
- * @param {Array}   furnitureList  - Pre-loaded furniture items (from sub-collection or legacy)
+ * @param {Array}   furnitureList  - Pre-loaded furniture items
  */
 function renderRoomPreview(room, containerId, furnitureList) {
     const container = document.getElementById(containerId);
     if (!container || !window.Konva) return;
 
-    const containerWidth = container.clientWidth || 250;
-    const containerHeight = container.clientHeight || 180;
+    // 1. CLEANUP: Prevent duplicate stages stacking in the same container
+    // Konva doesn't automatically clear containers. We must do it manually.
+    const existingStages = Konva.stages.filter(s => s.container() === container);
+    existingStages.forEach(s => s.destroy());
+
+    // 2. DIMENSIONS: Force a measurement check
+    const containerWidth = container.offsetWidth || 250;
+    const containerHeight = (container.offsetHeight && container.offsetHeight > 50) ? container.offsetHeight : 180;
 
     const stage = new Konva.Stage({
         container: containerId,
         width: containerWidth,
         height: containerHeight,
-        draggable: false
     });
-
-    // Track stage for cleanup on next re-render (Issue 2 fix)
     activeStages.push(stage);
 
     const layer = new Konva.Layer();
     stage.add(layer);
 
-    const padding = 20;
-    const editorBaseScale = 80;
-    const roomWidthPx = (room.width || 5) * editorBaseScale;
-    const roomHeightPx = (room.length || 5) * editorBaseScale;
+    // 3. GEOMETRY: 80px per meter standard
+    const wM = parseFloat(room.width) || 5;
+    const lM = parseFloat(room.length) || 5;
+    const editorScale = 80;
+    const wallT = 15;
 
-    const contentGroup = new Konva.Group();
-    const roomGroup = new Konva.Group();
+    const roomW = wM * editorScale;
+    const roomH = lM * editorScale;
+    
+    // Total visual bounds (floor + outer wall extents)
+    const totalW = roomW + wallT;
+    const totalH = roomH + wallT;
+
+    // 4. SCALING: Add generous 50px safety padding to prevent ANY clipping
+    const safetyPadding = 50;
+    const previewScale = Math.min(
+        (containerWidth - safetyPadding) / totalW,
+        (containerHeight - safetyPadding) / totalH
+    );
+
+    // 5. CENTERING: Pure mathematical pivot
+    // We place the group at the container center and offset its internal center.
+    const contentGroup = new Konva.Group({
+        scaleX: previewScale,
+        scaleY: previewScale,
+        x: containerWidth / 2,
+        y: containerHeight / 2,
+        offset: { x: roomW / 2, y: roomH / 2 }
+    });
 
     const floorColor = room.floorColor || '#F5DEB3';
     const wallColor = room.wallColor || '#FFFFFF';
-    const wallThickness = 15;
 
     // Draw Floor
-    const floor = new Konva.Rect({
-        x: 0, y: 0,
-        width: roomWidthPx,
-        height: roomHeightPx,
-        fill: floorColor, stroke: wallColor, strokeWidth: 3
-    });
-    roomGroup.add(floor);
+    contentGroup.add(new Konva.Rect({
+        x: 0, y: 0, width: roomW, height: roomH,
+        fill: floorColor, stroke: wallColor, strokeWidth: 1
+    }));
 
-    // Walls
-    const topWall = new Konva.Rect({ x: -wallThickness / 2, y: -wallThickness / 2, width: roomWidthPx + wallThickness, height: wallThickness, fill: wallColor, stroke: '#000', strokeWidth: 1 });
-    const bottomWall = new Konva.Rect({ x: -wallThickness / 2, y: roomHeightPx - wallThickness / 2, width: roomWidthPx + wallThickness, height: wallThickness, fill: wallColor, stroke: '#000', strokeWidth: 1 });
-    const leftWall = new Konva.Rect({ x: -wallThickness / 2, y: -wallThickness / 2, width: wallThickness, height: roomHeightPx + wallThickness, fill: wallColor, stroke: '#000', strokeWidth: 1 });
-    const rightWall = new Konva.Rect({ x: roomWidthPx - wallThickness / 2, y: -wallThickness / 2, width: wallThickness, height: roomHeightPx + wallThickness, fill: wallColor, stroke: '#000', strokeWidth: 1 });
+    // Draw Walls (Correctly centered at -wallT/2)
+    // CRITICAL: We use 'strokeScaleEnabled: false' so the border lines 
+    // remain 2px thick and visible regardless of how small the room is scaled.
+    const wallStyle = { 
+        fill: wallColor, 
+        stroke: '#475569', 
+        strokeWidth: 2.5, 
+        strokeScaleEnabled: false 
+    };
 
-    roomGroup.add(topWall, bottomWall, leftWall, rightWall);
-    contentGroup.add(roomGroup);
+    contentGroup.add(new Konva.Rect({ ...wallStyle, x: -wallT/2, y: -wallT/2, width: roomW + wallT, height: wallT }));
+    contentGroup.add(new Konva.Rect({ ...wallStyle, x: -wallT/2, y: roomH - wallT/2, width: roomW + wallT, height: wallT }));
+    contentGroup.add(new Konva.Rect({ ...wallStyle, x: -wallT/2, y: -wallT/2, width: wallT, height: roomH + wallT }));
+    contentGroup.add(new Konva.Rect({ ...wallStyle, x: roomW - wallT/2, y: -wallT/2, width: wallT, height: roomH + wallT }));
 
     const furnGroup = new Konva.Group();
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    contentGroup.add(furnGroup);
+    layer.add(contentGroup);
 
+    // 6. Furniture
     if (furnitureList && furnitureList.length > 0) {
         furnitureList.forEach(fData => {
-            minX = Math.min(minX, fData.x);
-            minY = Math.min(minY, fData.y);
-            maxX = Math.max(maxX, fData.x);
-            maxY = Math.max(maxY, fData.y);
-
-            // Use the item's own saved image first, fall back to catalog lookup
             const imageUrl = fData.image || furnitureImageMap[fData.furnitureId];
             if (imageUrl) {
-                // Wrap in a self-contained function to guarantee each async onload
-                // captures its own distinct imageUrl, fData, and imgObj references
                 loadFurnitureImage(imageUrl, fData, furnGroup, layer);
             }
         });
     }
 
-    contentGroup.add(furnGroup);
-
-    if (minX !== Infinity) {
-        const furnCenterX = (minX + maxX) / 2;
-        const furnCenterY = (minY + maxY) / 2;
-
-        roomGroup.position({
-            x: furnCenterX - (roomWidthPx / 2),
-            y: furnCenterY - (roomHeightPx / 2)
-        });
-    }
-
-    const scaleX = (containerWidth - padding) / roomWidthPx;
-    const scaleY = (containerHeight - padding) / roomHeightPx;
-    const previewScale = Math.min(scaleX, scaleY);
-
-    contentGroup.scale({ x: previewScale, y: previewScale });
-    layer.add(contentGroup);
-
-    setTimeout(() => {
-        const bounds = contentGroup.getClientRect({ skipTransform: false });
-        contentGroup.x((containerWidth - bounds.width) / 2 - bounds.x + contentGroup.x());
-        contentGroup.y((containerHeight - bounds.height) / 2 - bounds.y + contentGroup.y());
-        layer.batchDraw();
-    }, 50);
+    layer.batchDraw();
 }

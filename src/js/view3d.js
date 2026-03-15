@@ -365,18 +365,12 @@ class Room3DVisualizer {
                 const hMeters = 0.8;
 
                 // ---------------------------------------------------------------
-                // PLACEMENT FIX (Phase 2):
-                // The item.x and item.y from the 2D editor are now saved RELATIVE
-                // to the top-left of the room walls, NOT absolute stage pixels.
-                // We add half the scaled display size to find the object's centre relative to the room's top-left.
+                // PLACEMENT FIX:
+                // The item.x and item.y from the 2D editor are already saved as CENTER coordinates
+                // relative to the top-left of the room walls.
                 // ---------------------------------------------------------------
-                const centreRelativeXPx = item.x + (displayW * item.scaleX) / 2;
-                const centreRelativeYPx = item.y + (displayH * item.scaleY) / 2;
-
-                // The 3D world origin (0,0,0) is placed at the exact centre of the room.
-                // Convert top-left relative coordinates to center-origin relative coordinates.
-                const relativeX = centreRelativeXPx - (roomWidthPx / 2);
-                const relativeY = centreRelativeYPx - (roomLengthPx / 2);
+                const relativeX = item.x - (roomWidthPx / 2);
+                const relativeY = item.y - (roomLengthPx / 2);
 
                 const x3D = relativeX * this.pixelToMeterRatio;
                 const z3D = relativeY * this.pixelToMeterRatio;
@@ -779,8 +773,12 @@ class Room3DVisualizer {
         const relativeX = newPos.x / this.pixelToMeterRatio;
         const relativeY = newPos.z / this.pixelToMeterRatio;
         
-        const centreRelativeXPx = relativeX + (roomWidthPx / 2);
-        const centreRelativeYPx = relativeY + (roomLengthPx / 2);
+        let centreRelativeXPx = relativeX + (roomWidthPx / 2);
+        let centreRelativeYPx = relativeY + (roomLengthPx / 2);
+        
+        // Safety Clamp: Ensure coordinates never bleed outside the 2D room's pixel boundaries
+        centreRelativeXPx = Math.max(0, Math.min(roomWidthPx, centreRelativeXPx));
+        centreRelativeYPx = Math.max(0, Math.min(roomLengthPx, centreRelativeYPx));
         
         // Update furniture position (the 2D editor uses object center relative to top-left of room)
         furniture.x = centreRelativeXPx;
