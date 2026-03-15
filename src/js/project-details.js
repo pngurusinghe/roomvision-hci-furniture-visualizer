@@ -181,7 +181,7 @@ async function renderRooms(rooms) {
                 <div class="design-meta" style="font-size: 0.9em; color: var(--text-muted); margin-top: 8px;">
                      <p>Room: ${dimensions} (Height: ${room.height || 2.8}m)</p>
                      <p>Area: ${area} | Shape: ${room.shape || 'rectangular'}</p>
-                     ${hasLayout ? `<p style="color:#10b981;font-weight:600;margin-top:4px;">✅ Layout saved (${furnitureList.length} items)</p>` : '<p style="color:var(--text-tertiary);margin-top:4px;">No layout saved</p>'}
+                     ${hasLayout ? `<p style="color:#10b981;font-weight:600;margin-top:4px;">Layout saved (${furnitureList.length} items)</p>` : '<p style="color:var(--text-tertiary);margin-top:4px;">No layout saved</p>'}
                 </div>
             </div>
             <div class="card-actions" style="margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 15px;">

@@ -69,12 +69,26 @@ class RoomEditor2D {
     // STEP 1: LOAD STATE
     // ---------------------------------------------------------
     async loadCatalog() {
+        // Fast-path: Check session storage first to avoid 3-5s Firebase query delay
+        try {
+            const cachedCatalog = sessionStorage.getItem('furnitureCatalogCache');
+            if (cachedCatalog) {
+                this.catalogMap = JSON.parse(cachedCatalog);
+                console.log("⚡ Fast-loading catalog from session storage:", Object.keys(this.catalogMap).length, "items");
+                return;
+            }
+        } catch(e) {}
+
         try {
             const snap = await getDocs(collection(db, 'furniture'));
             snap.forEach(doc => {
                 this.catalogMap[doc.id] = doc.data();
             });
-            console.log("✅ Catalog loaded:", Object.keys(this.catalogMap).length, "items");
+            
+            // Save to session-storage for instant reloads when navigating back from 3D
+            sessionStorage.setItem('furnitureCatalogCache', JSON.stringify(this.catalogMap));
+            
+            console.log("✅ Catalog loaded from Firebase:", Object.keys(this.catalogMap).length, "items");
         } catch (e) {
             console.error("Error loading catalog:", e);
         }
@@ -102,6 +116,7 @@ class RoomEditor2D {
         }
 
         // Step B: Attempt to pull 3D layout only if it matches our resolved IDs
+        let fullSessionHit = false;
         try {
             const sessionRaw = sessionStorage.getItem('current3DLayout');
             if (sessionRaw) {
@@ -110,17 +125,50 @@ class RoomEditor2D {
                 if (!this.projectId && layout.projectId) this.projectId = layout.projectId;
                 if (!this.roomId && layout.roomId) this.roomId = layout.roomId;
                 
-                // Only recover the layout's furniture if it belongs to the room we're loading
-                if (this.roomId === layout.roomId && layout.furniture && layout.furniture.length > 0) {
-                    this.furnitureState = layout.furniture;
-                    hasSessionState = true;
+                // Only recover the layout's furniture and roomData if it belongs to the room we're loading
+                if (this.roomId === layout.roomId) {
+                    if (layout.furniture && layout.furniture.length > 0) {
+                        this.furnitureState = layout.furniture;
+                    }
+                    if (layout.roomData) {
+                        this.roomData = layout.roomData;
+                        hasSessionState = true;
+                        fullSessionHit = true;
+                    }
                 }
             }
         } catch (e) {
             console.warn("Failed to parse session layout", e);
         }
 
-        if (this.projectId && this.roomId) {
+        // Step C: If we still don't have room data, try `currentRoomData`
+        let roomDataFromSession = null;
+        try {
+            const raw = sessionStorage.getItem('currentRoomData');
+            if (raw) roomDataFromSession = JSON.parse(raw);
+        } catch(e) {}
+
+        if (fullSessionHit) {
+            console.log("⚡ Fast-loading full layout from session storage, skipping Firebase reads!");
+        } else if (
+            roomDataFromSession && 
+            this.roomId && 
+            sessionStorage.getItem('currentRoomId') === this.roomId
+        ) {
+            console.log("⚡ Fast-loading room data from session storage!");
+            this.roomData = {
+                width: roomDataFromSession.width,
+                length: roomDataFromSession.length,
+                height: roomDataFromSession.height || 2.8,
+                wallColor: roomDataFromSession.wallColor || '#FFFFFF',
+                floorColor: roomDataFromSession.floorColor || '#F5DEB3',
+                roomType: roomDataFromSession.roomType || 'room'
+            };
+            
+            if (!hasSessionState) {
+                this.furnitureState = roomDataFromSession.layout?.furniture || [];
+            }
+        } else if (this.projectId && this.roomId) {
             // Project-bound room
             const roomRef = doc(db, `projects/${this.projectId}/rooms/${this.roomId}`);
             const roomSnap = await getDoc(roomRef);
@@ -213,14 +261,21 @@ class RoomEditor2D {
                 cartList.forEach(item => {
                     for (let i = 0; i < item.quantity; i++) {
                         // Create a new proxy state object matching the unified schema
+                        const wInPx = item.width ? (parseFloat(item.width) * this.PIXELS_PER_METER) : 100;
+                        const hInPx = item.depth ? (parseFloat(item.depth) * this.PIXELS_PER_METER) : 100;
+                        
+                        // Default drop center of room (relative coordinate center)
+                        const centerX = (this.roomData.width * this.PIXELS_PER_METER) / 2;
+                        const centerY = (this.roomData.length * this.PIXELS_PER_METER) / 2;
+                        
                         this.furnitureState.push({
                             furnitureId: item.id,
                             image: item.image,
                             name: item.name,
-                            originalWidth: item.width ? (parseFloat(item.width) * this.PIXELS_PER_METER) : 100,
-                            originalHeight: item.depth ? (parseFloat(item.depth) * this.PIXELS_PER_METER) : 100,
-                            x: 0 + currentItemYOffset, // Default drop near room center (relative 0,0)
-                            y: 0 + currentItemYOffset,
+                            originalWidth: wInPx,
+                            originalHeight: hInPx,
+                            x: centerX + currentItemYOffset,
+                            y: centerY + currentItemYOffset,
                             rotation: 0,
                             scaleX: 1,
                             scaleY: 1
@@ -403,7 +458,27 @@ class RoomEditor2D {
                 rotation: itemState.rotation || 0,
                 scaleX: itemState.scaleX || 1,
                 scaleY: itemState.scaleY || 1,
-                draggable: true // STEP 3: Make interactive
+                draggable: true, // STEP 3: Make interactive
+                dragBoundFunc: (pos) => {
+                    // Calculate the real visual extent of the object including its current rotation
+                    const w = (itemState.displayWidth || itemState.originalWidth || 100) * (itemState.scaleX || 1);
+                    const h = (itemState.displayHeight || itemState.originalHeight || 100) * (itemState.scaleY || 1);
+                    const theta = (itemState.rotation || 0) * Math.PI / 180;
+                    
+                    const boundingW = Math.abs(w * Math.cos(theta)) + Math.abs(h * Math.sin(theta));
+                    const boundingH = Math.abs(w * Math.sin(theta)) + Math.abs(h * Math.cos(theta));
+                    
+                    const minX = this.roomOriginX + (boundingW / 2);
+                    const maxX = this.roomOriginX + (this.roomData.width * this.PIXELS_PER_METER) - (boundingW / 2);
+                    
+                    const minY = this.roomOriginY + (boundingH / 2);
+                    const maxY = this.roomOriginY + (this.roomData.length * this.PIXELS_PER_METER) - (boundingH / 2);
+
+                    return {
+                        x: Math.max(minX, Math.min(maxX, pos.x)),
+                        y: Math.max(minY, Math.min(maxY, pos.y))
+                    };
+                }
             });
 
             // Store the state array index so UI can modify the shared state later
@@ -417,6 +492,11 @@ class RoomEditor2D {
                 // Directly mutate the Single Source of Truth array
                 this.furnitureState[index].x = updatedX;
                 this.furnitureState[index].y = updatedY;
+                
+                // V3 PERSISTENCE SYNC: Delete any explicit mapped 3D coords so the 3D Viewer is forced to rebuild from these 2D coords
+                delete this.furnitureState[index].v3Position;
+                delete this.furnitureState[index].v3Rotation;
+                
                 console.log(`Moved item [${index}] to relatives: x=${updatedX.toFixed(1)}, y=${updatedY.toFixed(1)}`);
             });
 
@@ -468,6 +548,23 @@ class RoomEditor2D {
                     fontStyle: 'bold'
                 });
 
+                // AUTO-CLAMP LOD: Forcibly push the group fully inside the newly realized bounds (fixes edge-case bleeding from 3D scaling bounds!)
+                const theta = (itemState.rotation || 0) * Math.PI / 180;
+                const boundingW = Math.abs(w * Math.cos(theta)) + Math.abs(h * Math.sin(theta));
+                const boundingH = Math.abs(w * Math.sin(theta)) + Math.abs(h * Math.cos(theta));
+                
+                const minX = this.roomOriginX + (boundingW / 2);
+                const maxX = this.roomOriginX + (this.roomData.width * this.PIXELS_PER_METER) - (boundingW / 2);
+                const minY = this.roomOriginY + (boundingH / 2);
+                const maxY = this.roomOriginY + (this.roomData.length * this.PIXELS_PER_METER) - (boundingH / 2);
+
+                const clampedX = Math.max(minX, Math.min(maxX, proxyGroup.x()));
+                const clampedY = Math.max(minY, Math.min(maxY, proxyGroup.y()));
+                
+                proxyGroup.position({ x: clampedX, y: clampedY });
+                itemState.x = clampedX - this.roomOriginX;
+                itemState.y = clampedY - this.roomOriginY;
+
                 proxyGroup.add(konvaImg);
                 proxyGroup.add(label);
                 this.furnLayer.add(proxyGroup);
@@ -490,6 +587,11 @@ class RoomEditor2D {
             if (node) {
                 const idx = node.getAttr('stateIndex');
                 this.furnitureState[idx].rotation = node.rotation();
+                
+                // V3 PERSISTENCE SYNC: Clear explicit map to force 3D editor to resync on rotation
+                delete this.furnitureState[idx].v3Position;
+                delete this.furnitureState[idx].v3Rotation;
+                
                 console.log(`Rotated item [${idx}] to ${node.rotation()} degrees`);
             }
         });

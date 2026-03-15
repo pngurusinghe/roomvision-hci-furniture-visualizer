@@ -297,11 +297,15 @@ class Room3DVisualizer {
         const dLeft  = Math.abs(x3D + hw);
         const dRight = Math.abs(x3D - hw);
         const minD   = Math.min(dBack, dFront, dLeft, dRight);
+        
+        // Clamp the sliding coordinates so the frame doesn't stick out past the wall corners
+        const clampX = Math.max(-hw + 0.3, Math.min(hw - 0.3, x3D));
+        const clampZ = Math.max(-hl + 0.3, Math.min(hl - 0.3, z3D));
 
-        if (minD === dBack)  return { x: x3D,          y: hangY, z: -hl + off,  rotY: 0 };
-        if (minD === dFront) return { x: x3D,          y: hangY, z:  hl - off,  rotY: Math.PI };
-        if (minD === dLeft)  return { x: -hw + off,    y: hangY, z: z3D,        rotY:  Math.PI / 2 };
-                             return { x:  hw - off,    y: hangY, z: z3D,        rotY: -Math.PI / 2 };
+        if (minD === dBack)  return { x: clampX,       y: hangY, z: -hl + off,  rotY: 0 };
+        if (minD === dFront) return { x: clampX,       y: hangY, z:  hl - off,  rotY: Math.PI };
+        if (minD === dLeft)  return { x: -hw + off,    y: hangY, z: clampZ,     rotY:  Math.PI / 2 };
+                             return { x:  hw - off,    y: hangY, z: clampZ,     rotY: -Math.PI / 2 };
     }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -411,7 +415,12 @@ class Room3DVisualizer {
                             
                             console.log(`🏗️ Placing 3D model "${item.name}" at (${x3D.toFixed(2)}, ${z3D.toFixed(2)})`);
                             
-                            if (this._isWallArt(item.name)) {
+                            if (item.v3Position) {
+                                // V3 PERSISTENCE: Restore exact xyz and rotation if it was saved during a previous drag
+                                modelRoot.position.set(item.v3Position.x, item.v3Position.y, item.v3Position.z);
+                                modelRoot.rotation.y = item.v3Rotation !== undefined ? item.v3Rotation : rotationY;
+                                console.log(`🔄 Restored exact V3 coordinates: (${item.v3Position.x.toFixed(2)}, ${item.v3Position.y.toFixed(2)}, ${item.v3Position.z.toFixed(2)})`);
+                            } else if (this._isWallArt(item.name)) {
                                 const wp = this._getWallPlacement(x3D, z3D);
                                 modelRoot.position.set(wp.x, wp.y, wp.z);
                                 modelRoot.rotation.y = wp.rotY;
@@ -630,25 +639,52 @@ class Room3DVisualizer {
         if (this.raycaster.ray.intersectPlane(this.dragPlane, this.dragIntersection)) {
             const newPosition = this.dragIntersection.clone().sub(this.dragOffset);
             
-            // Apply boundary constraints (keep within room)
+            // Apply boundary constraints and object-specific snapping rules
             const room = this.layoutData.roomData;
             const halfWidth = room.width / 2;
             const halfLength = room.length / 2;
             
-            newPosition.x = Math.max(-halfWidth + 0.2, Math.min(halfWidth - 0.2, newPosition.x));
-            newPosition.z = Math.max(-halfLength + 0.2, Math.min(halfLength - 0.2, newPosition.z));
-            
-            // Apply real-time surface snapping
             const itemName = this.layoutData.furniture[this.selectedIndex]?.name || '';
-            const snappedY = this.calculateSnappedHeight(newPosition.x, newPosition.z, itemName, this.selectedObject);
+            const isWallArt = this._isWallArt(itemName);
+            
+            let finalX = newPosition.x;
+            let finalY = newPosition.y;
+            let finalZ = newPosition.z;
+            let finalRotY = this.selectedObject.rotation.y;
+
+            if (isWallArt) {
+                // Completely take over math for Wall Art to ensure it glues to the nearest vertical surface
+                const wp = this._getWallPlacement(newPosition.x, newPosition.z);
+                finalX = wp.x;
+                finalY = wp.y;
+                finalZ = wp.z;
+                finalRotY = wp.rotY;
+            } else {
+                // For floor and decor items, dynamically constrain them inside the room walls
+                const currentBox = new THREE.Box3().setFromObject(this.selectedObject);
+                const size = new THREE.Vector3();
+                currentBox.getSize(size);
+                
+                const padding = 0.05; // Prevent z-fighting with walls
+                const extentX = (size.x / 2) + padding;
+                const extentZ = (size.z / 2) + padding;
+                
+                finalX = Math.max(-halfWidth + extentX, Math.min(halfWidth - extentX, newPosition.x));
+                finalZ = Math.max(-halfLength + extentZ, Math.min(halfLength - extentZ, newPosition.z));
+                
+                finalY = this.calculateSnappedHeight(finalX, finalZ, itemName, this.selectedObject);
+            }
             
             // Add subtle visual feedback when snapping occurs
-            if (Math.abs(this.selectedObject.position.y - snappedY) > 0.1) {
-                console.log(`✨ Surface snap: ${this.selectedObject.position.y.toFixed(2)}m → ${snappedY.toFixed(2)}m`);
+            if (Math.abs(this.selectedObject.position.y - finalY) > 0.1) {
+                console.log(`✨ Surface snap: ${this.selectedObject.position.y.toFixed(2)}m → ${finalY.toFixed(2)}m`);
             }
             
             // Update object position with snapping
-            this.selectedObject.position.set(newPosition.x, snappedY, newPosition.z);
+            this.selectedObject.position.set(finalX, finalY, finalZ);
+            if (isWallArt) {
+                this.selectedObject.rotation.y = finalRotY;
+            }
             
             if (this.highlightHelper && this.highlightHelper.visible) {
                 this.highlightHelper.update();
@@ -750,6 +786,13 @@ class Room3DVisualizer {
         furniture.x = centreRelativeXPx;
         furniture.y = centreRelativeYPx;
         
+        // Ensure rotation is synced (especially important for Wall Art that auto-rotates to face normal)
+        furniture.rotation = -Math.round(THREE.MathUtils.radToDeg(this.selectedObject.rotation.y));
+        
+        // V3 PERSISTENCE: Save exact fractional 3D coordinates so the 3D Viewer doesn't have to recalculate heights next load
+        furniture.v3Position = { x: newPos.x, y: newPos.y, z: newPos.z };
+        furniture.v3Rotation = this.selectedObject.rotation.y;
+        
         // Update session storage so 2D editor stays in sync
         this.layoutData.furnitureItems = this.layoutData.furniture;
         sessionStorage.setItem('current3DLayout', JSON.stringify(this.layoutData));
@@ -841,6 +884,9 @@ class Room3DVisualizer {
 
         // Sync back to the sessionStorage layout so "Back to 2D" sees the updated rotation
         this._syncRotationToLayout(idx);
+        
+        // Finalize state to save the rotation in case the user navigates away
+        this.finalizeMoveOperation();
     }
 
     _updateAngleDisplay() {
