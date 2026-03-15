@@ -16,6 +16,14 @@
             --border: #e2e8f0;
         }
 
+        /* Dark mode vars — toggled by navbar.js via [data-rv-theme="dark"] */
+        [data-rv-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #e2e8f0;
+            --border: #334155;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -86,9 +94,9 @@
         }
 
         #three-container {
-            margin-top: 60px;
+            margin-top: 68px;
             width: 100vw;
-            height: calc(100vh - 60px);
+            height: calc(100vh - 68px);
             display: block;
         }
 
@@ -195,7 +203,7 @@
             position: fixed;
             bottom: 80px;
             right: 20px;
-            background: white;
+            background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             padding: 1.25rem 1.5rem;
@@ -368,46 +376,26 @@
         <div class="transition-text">Rendering 3D Environment...</div>
     </div>
 
-    <nav
-        class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-50 shadow-sm transition-all antialiased">
-        <div class="flex items-center gap-6">
-            <button onclick="window.location.href='home.html'"
-                class="flex items-center gap-2 cursor-pointer border-none bg-transparent hover:opacity-80 transition-opacity focus:outline-none">
-                <div
-                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-600 flex items-center justify-center text-white font-bold shadow-md">
-                    <svg class="w-5 h-5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                    </svg>
-                </div>
-                <span
-                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-accent-600">RoomVision</span>
-            </button>
-            <div class="w-px h-6 bg-slate-200"></div>
+    <!-- Universal Navigation -->
+    <div id="navbar-placeholder"></div>
 
-            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200 shadow-inner">
-                <span
-                    class="px-3 py-1.5 text-sm font-bold rounded-md bg-white text-brand-600 shadow-sm ring-1 ring-slate-200">🧊
-                    3D View</span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <button
-                class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-brand-600 transition-all shadow-sm"
-                id="backTo2DBtn">
-                ← Back to 2D Editor
-            </button>
-            <div class="w-px h-6 bg-slate-200 mx-2"></div>
-            <button
-                class="px-3 py-1.5 text-sm font-semibold text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                id="logoutBtn"
-                onclick="const auth = window.firebaseAuth || window.firebase?.auth(); if(auth) auth.signOut().then(() => { window.location.href = 'index.html'; });">
-                Logout
-            </button>
-        </div>
-    </nav>
+    <!-- 2D Editor back button + Download - floating overlay -->
+    <div style="position:fixed; top:80px; right:1.5rem; z-index:998; display:flex; gap:0.75rem; align-items:center;">
+        <button
+            style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1.1rem; font-size:0.85rem; font-weight:600; color:#334155; background:white; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.2s; font-family:inherit;"
+            id="backTo2DBtn"
+            onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to 2D Editor
+        </button>
+        <button
+            style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1.1rem; font-size:0.85rem; font-weight:600; color:#ffffff; background:#2563eb; border:1px solid #1e40af; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(37,99,235,0.25); transition:all 0.2s; font-family:inherit;"
+            id="download3DBtn"
+            onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#2563eb'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download 3D View
+        </button>
+    </div>
     <script>
         // Set up back button ASAP (before view3d.js loads) so it always works
         document.getElementById('backTo2DBtn').addEventListener('click', () => {
@@ -423,39 +411,117 @@
             } catch (e) { }
             window.location.href = 'editor-2d.html';
         });
+
+        // Download 3D view as PNG
+        // view3d.js must expose window.threeRenderer = renderer after setup
+        document.getElementById('download3DBtn').addEventListener('click', () => {
+            // Try to grab the canvas from the exposed renderer, or by DOM query
+            let canvas = null;
+            if (window.threeRenderer && window.threeRenderer.domElement) {
+                canvas = window.threeRenderer.domElement;
+            } else {
+                canvas = document.querySelector('#three-container canvas');
+            }
+
+            if (!canvas) {
+                alert('3D scene not ready yet. Please wait for it to fully load.');
+                return;
+            }
+
+            try {
+                // Force a render pass so we capture the current frame
+                if (window.threeRenderer && window.threeScene && window.threeCamera) {
+                    window.threeRenderer.render(window.threeScene, window.threeCamera);
+                }
+
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `RoomVision-3D-${Date.now()}.png`;
+                link.href = dataURL;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (e) {
+                console.error('Download error:', e);
+                alert('Could not capture the 3D view. Make sure the scene has finished loading.');
+            }
+        });
     </script>
 
     <div id="three-container"></div>
 
     <!-- Enhanced Phase 4: Object Controls Panel -->
     <div class="rotation-panel" id="rotationPanel">
-        <h4>🔄 Object Controls</h4>
+        <h4 style="display:flex;align-items:center;gap:0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+            Object Controls
+        </h4>
         <div class="object-info">
             <span id="selectedObjectName">No object selected</span>
             <div class="angle-badge" id="rotationAngle">0°</div>
         </div>
         <div class="move-controls">
-            <h5>🎮 Move Object</h5>
+            <h5 style="display:flex;align-items:center;gap:0.4rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+                Move Object
+            </h5>
             <p class="control-hint">Click and drag to move with surface snapping</p>
         </div>
         <div class="rotate-controls">
-            <h5>🔄 Rotate Object</h5>
+            <h5 style="display:flex;align-items:center;gap:0.4rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+                Rotate Object
+            </h5>
             <div class="btn-row">
-                <button id="rotateLeftBtn" title="Rotate 15° counter-clockwise">↺ Left</button>
-                <button id="rotateRightBtn" title="Rotate 15° clockwise">Right ↻</button>
+                <button id="rotateLeftBtn" title="Rotate 15° counter-clockwise">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-4.07"/></svg>
+                    Left
+                </button>
+                <button id="rotateRightBtn" title="Rotate 15° clockwise">
+                    Right
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-4.07"/></svg>
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="controls-hint">
-        <span>🔄 <strong>Left Click + Drag (Camera):</strong> Rotate view</span>
-        <span>🎮 <strong>Left Click + Drag (Object):</strong> Move with surface snapping</span>
-        <span>🔍 <strong>Right Click + Drag:</strong> Pan camera</span>
-        <span>🔍 <strong>Scroll:</strong> Zoom in/out</span>
-        <span>✨ <strong>Click object:</strong> Select for move & rotate</span>
-        <div class="feature-highlight">New: Drag objects to move them! Decor automatically snaps to table surfaces!</div>
+    <!-- Slim controls hint bar -->
+    <div id="controls-bar" style="
+        position: fixed;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        background: rgba(15, 23, 42, 0.78);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 100px;
+        padding: 0.45rem 1.4rem;
+        font-size: 0.78rem;
+        color: rgba(255,255,255,0.85);
+        font-family: Inter, -apple-system, sans-serif;
+        white-space: nowrap;
+        z-index: 100;
+        pointer-events: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        letter-spacing: 0.01em;
+    ">
+        <span style="display:flex;align-items:center;gap:0.4rem;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/><path d="M8 12h8M12 8v8"/></svg>
+            <strong>Drag</strong> to move objects
+        </span>
+        <span style="opacity:0.3">|</span>
+        <span><strong>Scroll</strong> to zoom</span>
+        <span style="opacity:0.3">|</span>
+        <span><strong>Right-drag</strong> to pan</span>
+        <span style="opacity:0.3">|</span>
+        <span><strong>Click</strong> to select</span>
     </div>
 
+    <script type="module" src="js/navbar.js"></script>
     <script type="module" src="js/view3d.js"></script>
 </body>
 

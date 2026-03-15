@@ -133,6 +133,63 @@ export async function saveRoomToProject(roomData) {
 }
 
 /**
+ * Upserts a room inside a project — updates if roomId provided, creates if not.
+ * Use this for "Save as Draft" so repeated clicks don't create new documents.
+ *
+ * @param {Object} roomData - Must include projectId; optionally include roomId to update.
+ * @returns {Promise<string>} The document ID (existing or newly created).
+ */
+export async function upsertRoomInProject(roomData) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    const { projectId, roomId: existingRoomId, ...roomFields } = roomData;
+    if (!projectId) throw new Error('projectId required');
+
+    const payload = {
+        ...roomFields,
+        userId: user.uid,
+        userEmail: user.email,
+        updatedAt: serverTimestamp()
+    };
+
+    try {
+        if (existingRoomId) {
+            // Verify the document actually exists before trying to update
+            const roomRef = doc(db, `projects/${projectId}/rooms`, existingRoomId);
+            const snap = await getDoc(roomRef);
+
+            if (snap.exists()) {
+                await updateDoc(roomRef, payload);
+                console.log('🔄 Room draft updated:', existingRoomId);
+                return existingRoomId;
+            } else {
+                // Stale ID (deleted doc or wrong project) — create a fresh document
+                console.warn('⚠️ Room doc not found, creating a new draft instead of updating');
+                sessionStorage.removeItem('currentRoomId');  // clear stale ID
+                const docRef = await addDoc(collection(db, `projects/${projectId}/rooms`), {
+                    ...payload,
+                    createdAt: serverTimestamp()
+                });
+                console.log('🏠 New room draft created (fallback):', docRef.id);
+                return docRef.id;
+            }
+        } else {
+            // First save — create a new document
+            const docRef = await addDoc(collection(db, `projects/${projectId}/rooms`), {
+                ...payload,
+                createdAt: serverTimestamp()
+            });
+            console.log('🏠 New room draft created under project:', projectId, 'Room ID:', docRef.id);
+            return docRef.id;
+        }
+    } catch (error) {
+        console.error('Error upserting room in project:', error);
+        throw new Error(`Failed to save room: ${error.message}`);
+    }
+}
+
+/**
  * Updates an existing room document in Firestore
  * 
  * @param {string} roomId - Document ID of the room to update

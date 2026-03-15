@@ -1,52 +1,8 @@
 /**
  * RoomVision Home Page
- * Handles user authentication, slider, and animations
+ * Handles slider, counter animations and smooth scroll.
+ * Auth + logout are handled by navbar.js
  */
-
-import { auth } from './firebase-config.js';
-import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-
-// Check authentication
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        // Redirect to login if not authenticated
-        window.location.href = 'index.html';
-    } else {
-        // Display user info
-        const userName = document.getElementById('userName');
-        const profileAvatar = document.getElementById('profileAvatar');
-        
-        if (user.displayName) {
-            userName.textContent = user.displayName;
-            profileAvatar.textContent = user.displayName.charAt(0).toUpperCase();
-        } else if (user.email) {
-            const name = user.email.split('@')[0];
-            userName.textContent = name;
-            profileAvatar.textContent = name.charAt(0).toUpperCase();
-        }
-    }
-});
-
-// Logout functionality
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-    try {
-        await signOut(auth);
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error('Logout error:', error);
-        alert('Failed to logout. Please try again.');
-    }
-});
-
-// Navbar scroll effect
-window.addEventListener('scroll', () => {
-    const navbar = document.getElementById('navbar');
-    if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-    } else {
-        navbar.classList.remove('scrolled');
-    }
-});
 
 // Image Slider
 let currentSlide = 0;

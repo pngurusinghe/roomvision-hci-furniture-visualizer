@@ -101,7 +101,7 @@ class Room3DVisualizer {
             1000
         );
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -119,6 +119,11 @@ class Room3DVisualizer {
 
         this.camera.position.set(0, maxDim * 1.2, maxDim * 1.2);
         this.controls.target.set(0, 0, 0);
+
+        // Expose to window so the inline download button script can access them
+        window.threeRenderer = this.renderer;
+        window.threeScene = this.scene;
+        window.threeCamera = this.camera;
     }
 
     buildRoom() {

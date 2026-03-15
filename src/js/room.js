@@ -5,7 +5,7 @@
  */
 
 import { validateDimension, validateRoomData } from './validation.js';
-import { saveRoomToFirestore, saveRoomToProject } from './storage.js';
+import { saveRoomToFirestore, saveRoomToProject, upsertRoomInProject } from './storage.js';
 import { showError, clearError, showLoading, hideLoading, showWarning, showSuccess } from './ui-feedback.js';
 
 // ============================================
@@ -19,7 +19,9 @@ const roomState = {
     shape: 'rectangular',
     wallColor: '#FFFFFF',
     floorColor: '#F5DEB3',
-    roomType: 'living-room'
+    roomType: 'living-room',
+    projectId: null,
+    roomId: null      // tracks the Firestore doc ID so Save as Draft can upsert
 };
 
 // ============================================
@@ -30,9 +32,21 @@ const roomState = {
     try {
         const params = new URLSearchParams(window.location.search);
         const pid = params.get('projectId');
+        const rid = params.get('roomId'); // allow editing an existing room
         if (pid) {
             roomState.projectId = pid;
             console.log('📂 Room setup opened for project:', pid);
+
+            // Capture existing roomId (from URL or sessionStorage) so we can upsert
+            if (rid) {
+                roomState.roomId = rid;
+                console.log('✏️  Editing existing room:', rid);
+            } else {
+                const storedRoomId = sessionStorage.getItem('currentRoomId');
+                if (storedRoomId) {
+                    roomState.roomId = storedRoomId;
+                }
+            }
             
             // Update header navigation to link back to project details
             const navProjectDetails = document.getElementById('navProjectDetails');
@@ -590,12 +604,23 @@ async function handleSaveDraft() {
     
     try {
         showLoading(elements.loadingOverlay);
-        // Use saveRoomToProject if projectId is present, else save globally
+
+        let savedId;
         if (roomState.projectId) {
-            await saveRoomToProject(roomData);
+            // Upsert: updates existing room doc if roomId known, otherwise creates new.
+            // upsertRoomInProject handles stale IDs gracefully (falls back to create).
+            savedId = await upsertRoomInProject({
+                ...roomData,
+                projectId: roomState.projectId,
+                roomId: roomState.roomId || null
+            });
+            // Always overwrite roomState.roomId with the returned ID (handles stale IDs too)
+            roomState.roomId = savedId;
+            sessionStorage.setItem('currentRoomId', savedId);
         } else {
             await saveRoomToFirestore(roomData);
         }
+
         hideLoading(elements.loadingOverlay);
         showSuccess('Draft saved successfully!');
     } catch (error) {

@@ -33,17 +33,17 @@ body {
 /* Top toolbar */
 .top-toolbar {
     position: fixed;
-    top: 0;
+    top: 68px;
     left: 0;
     right: 0;
-    height: 60px;
+    height: 56px;
     background: var(--bg-primary);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 2rem;
-    z-index: 1000;
+    z-index: 999;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
@@ -215,8 +215,8 @@ body {
 
 /* Canvas area */
 .canvas-area {
-    margin-top: 60px;
-    height: calc(100vh - 60px);
+    margin-top: calc(68px + 56px);
+    height: calc(100vh - 68px - 56px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -359,14 +359,12 @@ body {
     </style>
 </head>
 <body>
+    <!-- Universal Navigation -->
+    <div id="navbar-placeholder"></div>
+
     <div class="top-toolbar">
         <div class="toolbar-left">
-            <div class="logo">
-                🏠 RoomVision
-            </div>
-            
           
-            
             <div class="zoom-controls">
                 <span class="zoom-label">Zoom:</span>
                 <button class="zoom-btn" id="zoomOut">−</button>
@@ -378,20 +376,24 @@ body {
 
         <div class="toolbar-right">
             <button class="btn btn-secondary" id="addFurnitureBtn">
-                🛒 Add More Furniture
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                Add Furniture
             </button>
             <button class="btn btn-secondary" id="backToRoomBtn">
-                ← Back to Room
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back to Room
             </button>
-             <!-- Add Download Button -->
             <button class="btn btn-secondary" id="downloadBtn">
-                📥 Download
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
             </button>
             <button class="btn btn-primary" id="view3dBtn" style="background:var(--success); border-color:var(--success);">
-                👁️ View in 3D
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                View in 3D
             </button>
             <button class="btn btn-primary" id="saveBtn">
-                💾 Save Layout
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Layout
             </button>
         </div>
     </div>
@@ -430,6 +432,7 @@ body {
 
     <button class="delete-btn" id="deleteBtn">🗑️ Delete Selected</button>
 
+    <script type="module" src="js/navbar.js"></script>
     <script type="module" src="js/editor-2d.js"></script>
 </body>
 </html>

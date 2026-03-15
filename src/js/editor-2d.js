@@ -77,17 +77,40 @@ class RoomEditor2D {
                 console.log("⚡ Fast-loading catalog from session storage:", Object.keys(this.catalogMap).length, "items");
                 return;
             }
-        } catch(e) {}
+        } catch(e) {
+            // Corrupted cache — clear it and reload from Firebase
+            sessionStorage.removeItem('furnitureCatalogCache');
+        }
 
         try {
             const snap = await getDocs(collection(db, 'furniture'));
             snap.forEach(doc => {
                 this.catalogMap[doc.id] = doc.data();
             });
-            
-            // Save to session-storage for instant reloads when navigating back from 3D
-            sessionStorage.setItem('furnitureCatalogCache', JSON.stringify(this.catalogMap));
-            
+
+            // Cache a trimmed version — only fields needed by the 2D editor.
+            // Full furniture docs (with modelUrl, large descriptions etc.) easily
+            // exceed the 5 MB sessionStorage quota.
+            try {
+                const trimmed = {};
+                for (const [id, item] of Object.entries(this.catalogMap)) {
+                    trimmed[id] = {
+                        name:      item.name      || '',
+                        category:  item.category  || '',
+                        width:     item.width      ?? item.w ?? null,
+                        depth:     item.depth      ?? item.d ?? null,
+                        height:    item.height     ?? item.h ?? null,
+                        price:     item.price      ?? null,
+                        thumbnail: item.thumbnail  || item.imageUrl || ''
+                    };
+                }
+                sessionStorage.setItem('furnitureCatalogCache', JSON.stringify(trimmed));
+            } catch (quotaErr) {
+                // sessionStorage full — editor still works, just without the cache
+                console.warn("⚠️ Could not cache catalog (storage quota full):", quotaErr.message);
+                sessionStorage.removeItem('furnitureCatalogCache');
+            }
+
             console.log("✅ Catalog loaded from Firebase:", Object.keys(this.catalogMap).length, "items");
         } catch (e) {
             console.error("Error loading catalog:", e);
@@ -189,6 +212,37 @@ class RoomEditor2D {
                 roomType: data.roomType || 'room'
             };
 
+            // Fetch project name and persist it into sessionStorage so the
+            // navbar breadcrumb can show "My Projects › ProjectName › 2D Editor"
+            try {
+                const projectRef = doc(db, 'projects', this.projectId);
+                const projectSnap = await getDoc(projectRef);
+                if (projectSnap.exists()) {
+                    const projectName = projectSnap.data().name || projectSnap.data().projectName || null;
+                    if (projectName) {
+                        // Enrich currentRoomData
+                        const existing = JSON.parse(sessionStorage.getItem('currentRoomData') || '{}');
+                        existing.projectName = projectName;
+                        existing.projectId   = this.projectId;
+                        sessionStorage.setItem('currentRoomData', JSON.stringify(existing));
+
+                        // Enrich current3DLayout
+                        const layout = JSON.parse(sessionStorage.getItem('current3DLayout') || '{}');
+                        layout.projectName = projectName;
+                        layout.projectId   = this.projectId;
+                        layout.roomId      = this.roomId;
+                        sessionStorage.setItem('current3DLayout', JSON.stringify(layout));
+
+                        console.log(`📁 Project name set for breadcrumb: "${projectName}"`);
+                        // Signal the navbar to re-render the breadcrumb now that project name is known
+                        window.dispatchEvent(new CustomEvent('rv:projectContext'));
+                    }
+                }
+            } catch (e) {
+                // Non-critical — breadcrumb just won't show project name
+                console.warn('Could not fetch project name for breadcrumb:', e);
+            }
+
             if (!hasSessionState) {
                 // AGGRESSIVE LOAD: Always check sub-collection first, regardless of flags
                 this.furnitureState = [];
@@ -208,6 +262,7 @@ class RoomEditor2D {
                     console.error("Error during aggressive furniture fetch:", e);
                 }
             }
+
         } else if (this.roomId) {
             // Standalone room (no project ID)
             const roomRef = doc(db, 'rooms', this.roomId);
@@ -694,6 +749,40 @@ class RoomEditor2D {
                 } else {
                     window.location.href = 'room-setup.html';
                 }
+            });
+        }
+
+        // Download 2D floor plan as PNG
+        const downloadBtn = document.getElementById('downloadBtn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                // Temporarily reset zoom/pan so the full room is captured
+                const prevScale = this.stage.scaleX();
+                const prevPos = this.stage.position();
+
+                this.stage.scale({ x: 1, y: 1 });
+                this.stage.position({ x: 0, y: 0 });
+                this.stage.batchDraw();
+
+                const dataURL = this.stage.toDataURL({
+                    mimeType: 'image/png',
+                    quality: 1,
+                    pixelRatio: 2   // High-DPI output
+                });
+
+                // Restore previous view
+                this.stage.scale({ x: prevScale, y: prevScale });
+                this.stage.position(prevPos);
+                this.stage.batchDraw();
+
+                // Trigger download
+                const link = document.createElement('a');
+                const roomName = this.roomData?.roomType || 'room';
+                link.download = `RoomVision-2D-${roomName}-${Date.now()}.png`;
+                link.href = dataURL;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
         }
 
