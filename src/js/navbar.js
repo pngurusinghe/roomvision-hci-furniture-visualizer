@@ -1174,7 +1174,7 @@ export class Navbar {
 
         let navCenterHTML;
         if (isEditorPage) {
-            const projectsLink = `<a href="projects.html" class="rv-nav-link" style="display:flex;align-items:center;gap:0.35rem;opacity:0.7;font-weight:500;">My Projects</a>`;
+            const projectsLink = `<a href="projects.html" class="rv-nav-link" style="display:flex;align-items:center;gap:0.35rem;opacity:0.7;font-weight:500;">${folderIcon} My Projects</a>`;
             const projectLink = projectName && projectId
                 ? `${chevronSep}<a href="project-details.html?projectId=${projectId}" class="rv-nav-link" style="opacity:0.7;font-size:0.85rem;">${projectName}</a>`
                 : projectName

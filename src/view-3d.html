@@ -382,69 +382,110 @@
     <!-- 2D Editor back button + Download + Save Layout - floating overlay -->
     <div style="position:fixed; top:80px; right:1.5rem; z-index:998; display:flex; gap:0.75rem; align-items:center;">
         <button
-            style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1.1rem; font-size:0.85rem; font-weight:600; color:#334155; background:white; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.2s; font-family:inherit;"
-            id="backTo2DBtn"
+            style="display:flex; align-items:center; justify-content:center; padding:0.6rem; color:#334155; background:white; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.2s;"
+            id="backTo2DBtn" title="Back to 2D Editor"
             onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back to 2D Editor
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <button
-            style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1.1rem; font-size:0.85rem; font-weight:600; color:#ffffff; background:#2563eb; border:1px solid #1e40af; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(37,99,235,0.25); transition:all 0.2s; font-family:inherit;"
-            id="download3DBtn"
+            style="display:flex; align-items:center; justify-content:center; padding:0.6rem; color:#ffffff; background:#2563eb; border:1px solid #1e40af; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(37,99,235,0.25); transition:all 0.2s;"
+            id="download3DBtn" title="Download 3D View"
             onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#2563eb'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download 3D View
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
         <button
-            style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1.1rem; font-size:0.85rem; font-weight:600; color:#ffffff; background:#16a34a; border:1px solid #15803d; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(22,163,74,0.3); transition:all 0.2s; font-family:inherit;"
-            id="saveLayoutBtn"
+            style="display:flex; align-items:center; justify-content:center; padding:0.6rem; color:#ffffff; background:#16a34a; border:1px solid #15803d; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(22,163,74,0.3); transition:all 0.2s;"
+            id="saveLayoutBtn" title="Save Layout"
             onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-            Save Layout
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         </button>
     </div>
 
     <!-- Save Layout thank-you modal -->
     <div id="saveLayoutModal" style="
         display:none; position:fixed; inset:0; z-index:9999;
-        background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
-        align-items:center; justify-content:center;
+        background:rgba(15, 23, 42, 0.45); backdrop-filter:blur(12px) saturate(180%);
+        align-items:center; justify-content:center; overflow:hidden;
     ">
+        <!-- Floating decorative elements -->
+        <div class="rv3d-decor" style="position:absolute; inset:0; pointer-events:none; overflow:hidden;">
+            <!-- Floating Chair -->
+            <div style="position:absolute; top:15%; left:10%; animation:rvDrift 12s infinite alternate ease-in-out; opacity:0.15; transform:rotate(-15deg);">
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M7 6V15M17 6V15M5 15H19M7 15V20M17 15V20M8 6H16C16.5 6 17 6.5 17 7V12H7V7C7 6.5 7.5 6 8 6Z"/></svg>
+            </div>
+            <!-- Floating Lamp -->
+            <div style="position:absolute; bottom:15%; right:15%; animation:rvDrift 15s infinite alternate-reverse ease-in-out; opacity:0.12; transform:rotate(10deg);">
+                <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M12 2L8 8H16L12 2Z M12 8V22 M8 22H16"/></svg>
+            </div>
+            <!-- Floating Cube -->
+            <div style="position:absolute; top:60%; left:20%; animation:rvSpin 20s infinite linear; opacity:0.1; filter:blur(2px);">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1"><path d="M21 16V8L12 3L3 8V16L12 21L21 16Z M12 3V12 M12 12L21 8 M12 12L3 8 M12 12V21 M3 16L12 12 M21 16L12 12"/></svg>
+            </div>
+            <!-- Floating Table -->
+            <div style="position:absolute; top:20%; right:25%; animation:rvDrift 10s infinite alternate ease-in-out; opacity:0.1; transform:rotate(-5deg);">
+                <svg width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M4 8H20 M6 8V20 M18 8V20 M10 8V14 M14 8V14"/></svg>
+            </div>
+        </div>
+
         <div style="
-            background:#fff; border-radius:1.25rem; padding:2.5rem 3rem;
-            max-width:420px; width:90%; text-align:center;
-            box-shadow:0 24px 60px rgba(0,0,0,0.25);
-            animation:rvModalIn 0.35s cubic-bezier(.34,1.56,.64,1) both;
+            background:rgba(255, 255, 255, 0.85); backdrop-filter:blur(20px);
+            border:1px solid rgba(255, 255, 255, 0.4);
+            border-radius:1.75rem; padding:3rem 2.5rem;
+            max-width:440px; width:90%; text-align:center; position:relative;
+            box-shadow:0 32px 80px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.5);
+            animation:rvModalIn 0.5s cubic-bezier(.34,1.56,.64,1) both;
+            display:flex; flex-direction:column; align-items:center;
         ">
+            <!-- Particle Burst -->
+            <div class="rv-particles" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:100%; height:100%; pointer-events:none;"></div>
+
             <!-- Animated checkmark -->
             <div style="
-                width:72px; height:72px; border-radius:50%;
-                background:linear-gradient(135deg,#16a34a,#22c55e);
+                width:88px; height:88px; border-radius:50%;
+                background:linear-gradient(135deg,#10b981,#059669);
                 display:flex; align-items:center; justify-content:center;
-                margin:0 auto 1.25rem;
-                box-shadow:0 8px 24px rgba(22,163,74,0.35);
-                animation:rvPop 0.4s 0.15s cubic-bezier(.34,1.56,.64,1) both;
+                margin-bottom:1.5rem; position:relative;
+                box-shadow:0 12px 32px rgba(16,185,129,0.4);
+                animation:rvSuccessPop 0.6s cubic-bezier(.34,1.56,.64,1) both;
             ">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1))">
+                    <polyline points="20 6 9 17 4 12" style="animation:rvDraw 0.4s 0.3s ease-in-out both; stroke-dasharray:50; stroke-dashoffset:50;"/>
                 </svg>
             </div>
-            <h2 style="font-size:1.4rem;font-weight:700;color:#0f172a;margin:0 0 0.5rem;">Layout Saved!</h2>
-            <p style="color:#475569;font-size:0.95rem;margin:0 0 0.35rem;">Your room layout has been saved successfully.</p>
-            <p id="saveModalCountdown" style="color:#94a3b8;font-size:0.85rem;margin:0 0 1.75rem;">Redirecting to Project Details in 3s…</p>
+
+            <h2 style="font-size:1.6rem;font-weight:800;color:#0f172a;margin:0 0 0.75rem;letter-spacing:-0.02em;">Layout Saved!</h2>
+            <p style="color:#475569;font-size:1rem;margin:0 0 1.5rem;line-height:1.5;">Your 3D transformation has been successfully captured and synchronized.</p>
+            
+            <div style="width:100%; background:#f1f5f9; height:6px; border-radius:10px; margin-bottom:1.25rem; overflow:hidden; position:relative;">
+                <div id="saveModalProgress" style="position:absolute; top:0; left:0; height:100%; width:100%; background:linear-gradient(90deg,#10b981,#34d399); transition:width 1s linear;"></div>
+            </div>
+
+            <p id="saveModalCountdown" style="color:#64748b;font-size:0.9rem;font-weight:500;margin:0 0 2rem;">Redirecting in 3s…</p>
+            
             <button id="saveModalGoNow" style="
-                padding:0.65rem 2rem; background:#16a34a; color:#fff;
-                border:none; border-radius:0.6rem; font-size:0.9rem;
-                font-weight:600; cursor:pointer; font-family:inherit;
-                box-shadow:0 4px 12px rgba(22,163,74,0.35); transition:background 0.2s;
-            " onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
-                Go to Project Details
+                width:100%; padding:0.85rem; background:#0f172a; color:#fff;
+                border:none; border-radius:0.85rem; font-size:1rem;
+                font-weight:700; cursor:pointer; font-family:inherit;
+                box-shadow:0 8px 20px rgba(15,23,42,0.25); transition:all 0.2s;
+                display:flex; align-items:center; justify-content:center; gap:0.5rem;
+            " onmouseover="this.style.background='#1e293b';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0f172a';this.style.transform='translateY(0)'">
+                <span>Go to Project Details</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
         </div>
     </div>
     <style>
-        @keyframes rvModalIn { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
-        @keyframes rvPop     { from{transform:scale(0)}              to{transform:scale(1)}           }
+        @keyframes rvModalIn { from{opacity:0;transform:scale(0.85) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes rvSuccessPop { from{transform:scale(0) rotate(-20deg)} to{transform:scale(1) rotate(0)} }
+        @keyframes rvDraw { to { stroke-dashoffset:0; } }
+        @keyframes rvDrift { from{transform:translate(0,0) rotate(0deg)} to{transform:translate(20px,30px) rotate(15deg)} }
+        @keyframes rvSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        
+        .particle { position:absolute; border-radius:50%; pointer-events:none; animation:rvParticle 0.8s ease-out forwards; }
+        @keyframes rvParticle { 
+            0% { transform:translate(0,0) scale(1); opacity:1; } 
+            100% { transform:translate(var(--tx),var(--ty)) scale(0); opacity:0; } 
+        }
     </style>
     <script>
         // Set up back button ASAP (before view3d.js loads) so it always works
@@ -481,19 +522,54 @@
 
             let countdownTimer = null;
 
+            function createParticles() {
+                const container = document.querySelector('.rv-particles');
+                if (!container) return;
+                for (let i = 0; i < 30; i++) {
+                    const p = document.createElement('div');
+                    const color = ['#cbd5e1', '#10b981', '#34d399', '#ffffff'][Math.floor(Math.random() * 4)];
+                    p.className = 'particle';
+                    p.style.left = '50%';
+                    p.style.top = '50%';
+                    p.style.width = (Math.random() * 8 + 4) + 'px';
+                    p.style.height = p.style.width;
+                    p.style.backgroundColor = color;
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = Math.random() * 150 + 50;
+                    p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+                    p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+                    
+                    container.appendChild(p);
+                    setTimeout(() => p.remove(), 800);
+                }
+            }
+
             function showSaveModal() {
                 const modal = document.getElementById('saveLayoutModal');
                 const countdown = document.getElementById('saveModalCountdown');
+                const progress = document.getElementById('saveModalProgress');
                 modal.style.display = 'flex';
-
+                
+                // Trigger visual "seasoning"
+                createParticles();
+                
                 let secs = 3;
-                countdown.textContent = `Redirecting to Project Details in ${secs}s\u2026`;
+                progress.style.transition = 'none';
+                progress.style.width = '100%';
+                
+                // Force reflow for transition
+                void progress.offsetWidth;
+                progress.style.transition = 'width 3s linear';
+                progress.style.width = '0%';
+
+                countdown.textContent = `Redirecting in ${secs}s\u2026`;
 
                 clearInterval(countdownTimer);
                 countdownTimer = setInterval(() => {
                     secs--;
                     if (secs > 0) {
-                        countdown.textContent = `Redirecting to Project Details in ${secs}s\u2026`;
+                        countdown.textContent = `Redirecting in ${secs}s\u2026`;
                     } else {
                         clearInterval(countdownTimer);
                         window.location.href = buildProjectUrl();
