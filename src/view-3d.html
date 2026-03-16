@@ -379,7 +379,7 @@
     <!-- Universal Navigation -->
     <div id="navbar-placeholder"></div>
 
-    <!-- 2D Editor back button + Download - floating overlay -->
+    <!-- 2D Editor back button + Download + Save Layout - floating overlay -->
     <div style="position:fixed; top:80px; right:1.5rem; z-index:998; display:flex; gap:0.75rem; align-items:center;">
         <button
             style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1.1rem; font-size:0.85rem; font-weight:600; color:#334155; background:white; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.2s; font-family:inherit;"
@@ -395,7 +395,57 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download 3D View
         </button>
+        <button
+            style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1.1rem; font-size:0.85rem; font-weight:600; color:#ffffff; background:#16a34a; border:1px solid #15803d; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(22,163,74,0.3); transition:all 0.2s; font-family:inherit;"
+            id="saveLayoutBtn"
+            onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Layout
+        </button>
     </div>
+
+    <!-- Save Layout thank-you modal -->
+    <div id="saveLayoutModal" style="
+        display:none; position:fixed; inset:0; z-index:9999;
+        background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+        align-items:center; justify-content:center;
+    ">
+        <div style="
+            background:#fff; border-radius:1.25rem; padding:2.5rem 3rem;
+            max-width:420px; width:90%; text-align:center;
+            box-shadow:0 24px 60px rgba(0,0,0,0.25);
+            animation:rvModalIn 0.35s cubic-bezier(.34,1.56,.64,1) both;
+        ">
+            <!-- Animated checkmark -->
+            <div style="
+                width:72px; height:72px; border-radius:50%;
+                background:linear-gradient(135deg,#16a34a,#22c55e);
+                display:flex; align-items:center; justify-content:center;
+                margin:0 auto 1.25rem;
+                box-shadow:0 8px 24px rgba(22,163,74,0.35);
+                animation:rvPop 0.4s 0.15s cubic-bezier(.34,1.56,.64,1) both;
+            ">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+            <h2 style="font-size:1.4rem;font-weight:700;color:#0f172a;margin:0 0 0.5rem;">Layout Saved!</h2>
+            <p style="color:#475569;font-size:0.95rem;margin:0 0 0.35rem;">Your room layout has been saved successfully.</p>
+            <p id="saveModalCountdown" style="color:#94a3b8;font-size:0.85rem;margin:0 0 1.75rem;">Redirecting to Project Details in 3s…</p>
+            <button id="saveModalGoNow" style="
+                padding:0.65rem 2rem; background:#16a34a; color:#fff;
+                border:none; border-radius:0.6rem; font-size:0.9rem;
+                font-weight:600; cursor:pointer; font-family:inherit;
+                box-shadow:0 4px 12px rgba(22,163,74,0.35); transition:background 0.2s;
+            " onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+                Go to Project Details
+            </button>
+        </div>
+    </div>
+    <style>
+        @keyframes rvModalIn { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
+        @keyframes rvPop     { from{transform:scale(0)}              to{transform:scale(1)}           }
+    </style>
     <script>
         // Set up back button ASAP (before view3d.js loads) so it always works
         document.getElementById('backTo2DBtn').addEventListener('click', () => {
@@ -411,6 +461,53 @@
             } catch (e) { }
             window.location.href = 'editor-2d.html';
         });
+
+        // ── Save Layout button ───────────────────────────────────────────────
+        (function () {
+            function getProjectId() {
+                try {
+                    const layout = JSON.parse(sessionStorage.getItem('current3DLayout') || 'null');
+                    if (layout && layout.projectId) return layout.projectId;
+                    const roomData = JSON.parse(sessionStorage.getItem('currentRoomData') || 'null');
+                    if (roomData && roomData.projectId) return roomData.projectId;
+                } catch (e) {}
+                return null;
+            }
+
+            function buildProjectUrl() {
+                const pid = getProjectId();
+                return pid ? `project-details.html?projectId=${pid}` : 'projects.html';
+            }
+
+            let countdownTimer = null;
+
+            function showSaveModal() {
+                const modal = document.getElementById('saveLayoutModal');
+                const countdown = document.getElementById('saveModalCountdown');
+                modal.style.display = 'flex';
+
+                let secs = 3;
+                countdown.textContent = `Redirecting to Project Details in ${secs}s\u2026`;
+
+                clearInterval(countdownTimer);
+                countdownTimer = setInterval(() => {
+                    secs--;
+                    if (secs > 0) {
+                        countdown.textContent = `Redirecting to Project Details in ${secs}s\u2026`;
+                    } else {
+                        clearInterval(countdownTimer);
+                        window.location.href = buildProjectUrl();
+                    }
+                }, 1000);
+            }
+
+            document.getElementById('saveLayoutBtn').addEventListener('click', showSaveModal);
+
+            document.getElementById('saveModalGoNow').addEventListener('click', () => {
+                clearInterval(countdownTimer);
+                window.location.href = buildProjectUrl();
+            });
+        })();
 
         // Download 3D view as PNG
         // view3d.js must expose window.threeRenderer = renderer after setup

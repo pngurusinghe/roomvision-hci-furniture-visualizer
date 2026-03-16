@@ -1,11 +1,6 @@
 import { auth } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-/**
- * RoomVision Universal Navbar Component
- * Injects a polished, fully styled navigation bar into any page.
- * Features: active-page detection, dark/light mode toggle, profile dropdown, mobile menu.
- */
 export class Navbar {
     constructor(placeholderId = 'navbar-placeholder') {
         this.placeholder = document.getElementById(placeholderId);
@@ -30,7 +25,7 @@ export class Navbar {
         }
     }
 
-    /* ── Theme ── */
+    //Theme changer
     applyTheme(dark) {
         // data-rv-theme drives the navbar's own CSS vars
         // data-theme drives existing room.css / projects.css dark-mode blocks
@@ -1162,7 +1157,7 @@ export class Navbar {
                         roomId = roomId || sessionStorage.getItem('currentRoomId');
                     }
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         // Format room name: 'living-room' → 'Living Room'
@@ -1183,15 +1178,15 @@ export class Navbar {
             const projectLink = projectName && projectId
                 ? `${chevronSep}<a href="project-details.html?projectId=${projectId}" class="rv-nav-link" style="opacity:0.7;font-size:0.85rem;">${projectName}</a>`
                 : projectName
-                ? `${chevronSep}<span class="rv-nav-link" style="opacity:0.7;font-size:0.85rem;">${projectName}</span>`
-                : '';
+                    ? `${chevronSep}<span class="rv-nav-link" style="opacity:0.7;font-size:0.85rem;">${projectName}</span>`
+                    : '';
 
             // Map each editor page to a friendly label — never use room type as the crumb label
             const pageLabels = {
-                'room-setup.html':    'Room Setup',
-                'editor-2d.html':     '2D Editor',
-                'view-3d.html':       '3D View',
-                'furniture-shop.html':'Furniture Shop'
+                'room-setup.html': 'Room Setup',
+                'editor-2d.html': '2D Editor',
+                'view-3d.html': '3D View',
+                'furniture-shop.html': 'Furniture Shop'
             };
 
             let finalCrumb = '';

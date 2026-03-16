@@ -869,8 +869,22 @@ class RoomEditor2D {
             });
 
             console.log("✅ State successfully saved to Firebase!");
-            saveBtn.innerHTML = '<span>✅ Saved!</span>';
-            setTimeout(() => { saveBtn.innerHTML = originalText; saveBtn.disabled = false; }, 2000);
+            saveBtn.innerHTML = '<span>✅ Saved! Opening 3D…</span>';
+
+            // Persist the freshly-saved layout so view-3d.html can read it immediately
+            sessionStorage.setItem('current3DLayout', JSON.stringify({
+                roomData:          this.roomData,
+                furniture:         this.furnitureState,
+                canvasRoomOriginX: this.roomOriginX,
+                canvasRoomOriginY: this.roomOriginY,
+                projectId:         this.projectId,
+                roomId:            this.roomId
+            }));
+
+            // Navigate to 3D view after brief confirmation (800 ms)
+            setTimeout(() => {
+                window.location.href = `view-3d.html?projectId=${this.projectId}&roomId=${this.roomId}`;
+            }, 800);
 
         } catch(error) {
             console.error("Save error:", error);

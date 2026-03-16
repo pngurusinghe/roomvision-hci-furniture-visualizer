@@ -255,43 +255,37 @@ window.deleteRoom = async function (roomId) {
 
 /**
  * Load a single furniture image and add it to the Konva preview.
- * Isolated in its own function to guarantee each async onload callback
- * captures its own distinct imageUrl, fData, and imgObj references —
- * preventing the "first image overrides all" browser cache/closure bug.
+ * Dimensions are derived from the saved state (originalWidth/originalHeight at 80px/m)
+ * so the preview faithfully mirrors the 2D editor's layout.
  */
 function loadFurnitureImage(imageUrl, fData, furnGroup, layer) {
     const imgObj = new Image();
     imgObj.crossOrigin = 'Anonymous';
     imgObj.onload = function () {
-        const maxDisplaySize = 120;
-        const aspectRatio = imgObj.width / imgObj.height;
-        let dWidth, dHeight;
-        if (imgObj.width > imgObj.height) {
-            dWidth = Math.min(imgObj.width, maxDisplaySize);
-            dHeight = dWidth / aspectRatio;
-        } else {
-            dHeight = Math.min(imgObj.height, maxDisplaySize);
-            dWidth = dHeight * aspectRatio;
-        }
+        // Use the saved pixel dimensions (from 2D editor at 80px/m).
+        // Fallback chain: originalWidth → displayWidth → image natural size capped at 100px
+        const dWidth  = fData.originalWidth  || fData.displayWidth  || Math.min(imgObj.width,  100);
+        const dHeight = fData.originalHeight || fData.displayHeight || Math.min(imgObj.height, 100);
 
         const fGroup = new Konva.Group({
-            x: fData.x,
-            y: fData.y,
+            x:        fData.x,
+            y:        fData.y,
             rotation: fData.rotation || 0,
-            scaleX: fData.scaleX || 1,
-            scaleY: fData.scaleY || 1
+            scaleX:   fData.scaleX   || 1,
+            scaleY:   fData.scaleY   || 1
         });
 
+        // Image is centered on the group origin, matching the 2D editor convention
         const fImg = new Konva.Image({
-            x: -dWidth / 2,
-            y: -dHeight / 2,
-            image: imgObj,
-            width: dWidth,
+            x:      -dWidth  / 2,
+            y:      -dHeight / 2,
+            image:  imgObj,
+            width:  dWidth,
             height: dHeight,
-            shadowColor: 'rgba(0, 0, 0, 0.3)',
-            shadowBlur: 12,
-            shadowOpacity: 0.6,
-            shadowOffset: { x: 4, y: 4 }
+            shadowColor:   'rgba(0,0,0,0.3)',
+            shadowBlur:    8,
+            shadowOpacity: 0.5,
+            shadowOffset:  { x: 3, y: 3 }
         });
 
         fGroup.add(fImg);
