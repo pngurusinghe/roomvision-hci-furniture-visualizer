@@ -205,9 +205,6 @@ async function renderRooms(rooms) {
                 </div>
             </div>
             <div class="card-actions" style="margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-                <button class="btn-secondary" onclick="window.location.href='room-setup.html?projectId=${currentProjectId}&roomId=${room.id}'" style="flex: 1; padding: 0.625rem 1rem; border-radius: 8px; font-weight: 600;">
-                    <span>Edit Room</span>
-                </button>
                 <button class="btn-primary" onclick="window.location.href='editor-2d.html?projectId=${currentProjectId}&roomId=${room.id}'" style="flex: 1; padding: 0.625rem 1rem; border-radius: 8px; font-weight: 600;">
                     <span>Edit Design</span>
                 </button>

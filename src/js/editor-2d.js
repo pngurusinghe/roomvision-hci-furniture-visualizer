@@ -696,15 +696,87 @@ class RoomEditor2D {
     // ---------------------------------------------------------
     updateRoomInfoUI() {
         if(roomDimensionsEl) roomDimensionsEl.textContent = `${this.roomData.width}m × ${this.roomData.length}m × ${this.roomData.height}m`;
-        if(roomTypeEl) roomTypeEl.textContent = `Type: ${this.roomData.roomType}`;
+        if(roomTypeEl) roomTypeEl.textContent = this.roomData.roomType;
         const area = (this.roomData.width * this.roomData.length).toFixed(2);
-        if(roomAreaEl) roomAreaEl.textContent = `Area: ${area} m²`;
+        if(roomAreaEl) roomAreaEl.textContent = `${area} m²`;
 
-        if(wallColorPicker) wallColorPicker.value = this.roomData.wallColor;
-        if(floorColorPicker) floorColorPicker.value = this.roomData.floorColor;
+        if(wallColorPicker) {
+            wallColorPicker.value = this.roomData.wallColor;
+            const preview = document.getElementById('wallColorPreviewBtn');
+            if (preview) preview.style.backgroundColor = this.roomData.wallColor;
+        }
+        if(floorColorPicker) {
+            floorColorPicker.value = this.roomData.floorColor;
+            const preview = document.getElementById('floorColorPreviewBtn');
+            if (preview) preview.style.backgroundColor = this.roomData.floorColor;
+        }
     }
 
     setupUIBindings() {
+        // --- Room Editor Popover Bindings ---
+        const editRoomBtn = document.getElementById('editRoomBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const sidebar = document.getElementById('roomSettingsSidebar');
+        if (editRoomBtn && sidebar) {
+            editRoomBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                if (sidebar.classList.contains('active')) this.syncSidebarInputs();
+            });
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!sidebar.contains(e.target) && !editRoomBtn.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        }
+        if (closeSettingsBtn && sidebar) {
+            closeSettingsBtn.addEventListener('click', () => sidebar.classList.remove('active'));
+        }
+
+        // --- Dimension Inputs (Compressed) ---
+        const widthNum = document.getElementById('roomWidthNum');
+        const lengthNum = document.getElementById('roomLengthNum');
+
+        const syncWidth = (val) => {
+            const num = parseFloat(val);
+            if (isNaN(num)) return;
+            this.handleRoomResize(num, this.roomData.length);
+        };
+        const syncLength = (val) => {
+            const num = parseFloat(val);
+            if (isNaN(num)) return;
+            this.handleRoomResize(this.roomData.width, num);
+        };
+
+        if (widthNum) widthNum.addEventListener('change', (e) => syncWidth(e.target.value));
+        if (widthNum) widthNum.addEventListener('input', (e) => syncWidth(e.target.value)); // Real-time feedback
+        if (lengthNum) lengthNum.addEventListener('change', (e) => syncLength(e.target.value));
+        if (lengthNum) lengthNum.addEventListener('input', (e) => syncLength(e.target.value)); // Real-time feedback
+
+        // --- Color Pickers ---
+        const wallPicker = document.getElementById('wallColorPicker2D');
+        const wallBtn = document.getElementById('wallColorPreviewBtn');
+        const floorPicker = document.getElementById('floorColorPicker2D');
+        const floorBtn = document.getElementById('floorColorPreviewBtn');
+
+        if (wallBtn && wallPicker) {
+            wallBtn.addEventListener('click', () => wallPicker.click());
+            wallPicker.addEventListener('input', (e) => {
+                this.roomData.wallColor = e.target.value;
+                wallBtn.style.backgroundColor = e.target.value;
+                this.render();
+            });
+        }
+        if (floorBtn && floorPicker) {
+            floorBtn.addEventListener('click', () => floorPicker.click());
+            floorPicker.addEventListener('input', (e) => {
+                this.roomData.floorColor = e.target.value;
+                floorBtn.style.backgroundColor = e.target.value;
+                this.render();
+            });
+        }
+
         // 3D Handoff
         const view3dBtn = document.getElementById('view3dBtn');
         if (view3dBtn) {
@@ -803,6 +875,47 @@ class RoomEditor2D {
         });
     }
 
+    syncSidebarInputs() {
+        const widthNum = document.getElementById('roomWidthNum');
+        const lengthNum = document.getElementById('roomLengthNum');
+        const wallPicker = document.getElementById('wallColorPicker2D');
+        const floorPicker = document.getElementById('floorColorPicker2D');
+
+        if (widthNum) widthNum.value = this.roomData.width;
+        if (lengthNum) lengthNum.value = this.roomData.length;
+        if (wallPicker) wallPicker.value = this.roomData.wallColor;
+        if (floorPicker) floorPicker.value = this.roomData.floorColor;
+        
+        const wallBtn = document.getElementById('wallColorPreviewBtn');
+        const floorBtn = document.getElementById('floorColorPreviewBtn');
+        if (wallBtn) wallBtn.style.backgroundColor = this.roomData.wallColor;
+        if (floorBtn) floorBtn.style.backgroundColor = this.roomData.floorColor;
+    }
+
+    handleRoomResize(w, l) {
+        this.roomData.width = w;
+        this.roomData.length = l;
+
+        // CLAMP FURNITURE: Ensure all items remain within new boundaries
+        this.furnitureState.forEach(item => {
+            const wPx = w * this.PIXELS_PER_METER;
+            const hPx = l * this.PIXELS_PER_METER;
+            
+            // Calculate item bounds (using simple center-based clamping)
+            const itemW = (item.displayWidth || item.originalWidth || 100) * (item.scaleX || 1);
+            const itemH = (item.displayHeight || item.originalHeight || 100) * (item.scaleY || 1);
+            
+            const halfW = itemW / 2;
+            const halfH = itemH / 2;
+
+            item.x = Math.max(halfW, Math.min(wPx - halfW, item.x));
+            item.y = Math.max(halfH, Math.min(hPx - halfH, item.y));
+        });
+
+        this.updateRoomInfoUI();
+        this.render();
+    }
+
     /**
      * Cross-page communication to 'Add Furniture' flow
      */
@@ -863,6 +976,9 @@ class RoomEditor2D {
                     canvasRoomOriginY: this.roomOriginY,
                     updatedAt: new Date().toISOString()
                 },
+                width: this.roomData.width,
+                length: this.roomData.length,
+                area: this.roomData.width * this.roomData.length,
                 wallColor: this.roomData.wallColor || '#FFFFFF',
                 floorColor: this.roomData.floorColor || '#F5DEB3',
                 updatedAt: serverTimestamp()

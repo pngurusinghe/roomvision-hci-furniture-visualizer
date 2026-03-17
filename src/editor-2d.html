@@ -1,370 +1,379 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RoomVision - 2D Editor</title>
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>
     <style>
-       :root {
-    --primary: #2563eb;
-    --primary-dark: #1e40af;
-    --success: #10b981;
-    --danger: #ef4444;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --border: #e2e8f0;
-}
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+        }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg-secondary);
-    overflow: hidden;
-}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
 
-/* Top toolbar */
-.top-toolbar {
-    position: fixed;
-    top: 68px;
-    left: 0;
-    right: 0;
-    height: 56px;
-    background: var(--bg-primary);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2rem;
-    z-index: 999;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
+        /* Top toolbar */
+        .top-toolbar {
+            position: fixed;
+            top: 68px;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 999;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
 
-.toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-}
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
 
-.logo {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-.view-buttons {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
+        .view-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
 
-.view-btn {
-    padding: 0.5rem 1rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    color: var(--text-secondary);
-}
+        .view-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
 
-.view-btn:hover {
-    background: #f1f5f9;
-    color: var(--primary);
-}
+        .view-btn:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
 
-.view-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
+        .view-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
 
-/* Zoom controls */
-.zoom-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding-left: 2rem;
-    border-left: 1px solid var(--border);
-}
+        /* Zoom controls */
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-left: 2rem;
+            border-left: 1px solid var(--border);
+        }
 
-.zoom-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
+        .zoom-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
 
-.zoom-slider {
-    width: 120px;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border);
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-}
+        .zoom-slider {
+            width: 120px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
 
-.zoom-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--primary);
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
-}
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+        }
 
-.zoom-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-    background: var(--primary-dark);
-}
+        .zoom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--primary-dark);
+        }
 
-.zoom-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--primary);
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
-}
+        .zoom-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+        }
 
-.zoom-value {
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    font-weight: 600;
-    min-width: 50px;
-}
+        .zoom-value {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            min-width: 50px;
+        }
 
-.zoom-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 0.375rem;
-    border: 1px solid var(--border);
-    background: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    transition: all 0.2s;
-    color: var(--text-secondary);
-}
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 0.375rem;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
 
-.zoom-btn:hover {
-    background: var(--bg-secondary);
-    border-color: var(--primary);
-    color: var(--primary);
-}
+        .zoom-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
 
-.toolbar-right {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-}
+        .toolbar-right {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
 
-.btn {
-    padding: 0.625rem 1.25rem;
-    border-radius: 0.5rem;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-.btn-secondary {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-}
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
 
-.btn-secondary:hover {
-    background: #f1f5f9;
-    border-color: var(--primary);
-}
+        .btn-secondary:hover {
+            background: #f1f5f9;
+            border-color: var(--primary);
+        }
 
-.btn-primary {
-    background: var(--primary);
-    color: white;
-}
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
 
-.btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
 
-/* Canvas area */
-.canvas-area {
-    margin-top: calc(68px + 56px);
-    height: calc(100vh - 68px - 56px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-secondary);
-    position: relative;
-    overflow: hidden;
-}
+        /* Canvas area */
+        .canvas-area {
+            margin-top: calc(68px + 56px);
+            height: calc(100vh - 68px - 56px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            position: relative;
+            overflow: hidden;
+        }
 
-#canvas-container {
-    background: white;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    border-radius: 0.5rem;
-    cursor: grab;
-}
+        #canvas-container {
+            background: white;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            cursor: grab;
+        }
 
-#canvas-container.grabbing {
-    cursor: grabbing;
-}
+        #canvas-container.grabbing {
+            cursor: grabbing;
+        }
 
-/* Room info panel */
-.room-info {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: white;
-    padding: 1rem 1.25rem;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 100;
-    border: 1px solid var(--border);
-}
+        /* Room info panel */
+        .room-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            border: 1px solid var(--border);
+        }
 
-.room-info h4 {
-    margin-bottom: 0.5rem;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-weight: 700;
-}
+        .room-info h4 {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
 
-.room-info p {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin: 0.25rem 0;
-}
+        .room-info p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0.25rem 0;
+        }
 
-/* Instructions */
-.instructions {
-    position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #eff6ff, #dbeafe);
-    padding: 0.875rem 1.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid #93c5fd;
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    z-index: 100;
-    animation: fadeIn 0.5s;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
-}
+        /* Instructions */
+        .instructions {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            padding: 0.875rem 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #93c5fd;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            z-index: 100;
+            animation: fadeIn 0.5s;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
 
-.instructions.hidden {
-    display: none;
-}
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
 
-/* Delete button */
-.delete-btn {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.75rem 1.5rem;
-    background: var(--danger);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-    display: none;
-    z-index: 100;
-}
+        .instructions.hidden {
+            display: none;
+        }
 
-.delete-btn.visible {
-    display: block;
-}
+        /* Delete button */
+        .delete-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.75rem 1.5rem;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            display: none;
+            z-index: 100;
+        }
 
-.delete-btn:hover {
-    background: #dc2626;
-    transform: translateX(-50%) translateY(-2px);
-}
+        .delete-btn.visible {
+            display: block;
+        }
 
-/* Keyboard shortcuts help */
-.shortcuts-help {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: white;
-    padding: 1rem 1.25rem;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    z-index: 100;
-    border: 1px solid var(--border);
-}
+        .delete-btn:hover {
+            background: #dc2626;
+            transform: translateX(-50%) translateY(-2px);
+        }
 
-.shortcuts-help h4 {
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-    font-weight: 700;
-}
+        /* Keyboard shortcuts help */
+        .shortcuts-help {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            z-index: 100;
+            border: 1px solid var(--border);
+        }
 
-.shortcut-item {
-    display: flex;
-    gap: 0.75rem;
-    margin: 0.5rem 0;
-    align-items: center;
-}
+        .shortcuts-help h4 {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
 
-.shortcut-key {
-    background: var(--bg-secondary);
-    padding: 0.25rem 0.625rem;
-    border-radius: 0.25rem;
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-    font-size: 0.75rem;
-}
+        .shortcut-item {
+            display: flex;
+            gap: 0.75rem;
+            margin: 0.5rem 0;
+            align-items: center;
+        }
+
+        .shortcut-key {
+            background: var(--bg-secondary);
+            padding: 0.25rem 0.625rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
     </style>
 </head>
+
 <body>
     <!-- Universal Navigation -->
     <div id="navbar-placeholder"></div>
 
     <div class="top-toolbar">
         <div class="toolbar-left">
-          
+
             <div class="zoom-controls">
                 <span class="zoom-label">Zoom:</span>
                 <button class="zoom-btn" id="zoomOut">−</button>
@@ -376,38 +385,349 @@ body {
 
         <div class="toolbar-right">
             <button class="btn btn-secondary" id="addFurnitureBtn" title="Add Furniture">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v8M8 12h8" />
+                </svg>
             </button>
             <button class="btn btn-secondary" id="backToRoomBtn" title="Back to Room">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                </svg>
             </button>
             <button class="btn btn-secondary" id="downloadBtn" title="Download Image">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
             </button>
-            <button class="btn btn-primary" id="view3dBtn" title="View in 3D" style="background:var(--success); border-color:var(--success);">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <button class="btn btn-secondary" id="editRoomBtn" title="Edit Room">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+            </button>
+            <button class="btn btn-primary" id="view3dBtn" title="View in 3D"
+                style="background:var(--success); border-color:var(--success);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
             </button>
             <button class="btn btn-primary" id="saveBtn" title="Save Layout">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                </svg>
             </button>
         </div>
     </div>
 
-    
+
 
     <div class="canvas-area" id="canvasArea">
         <div class="instructions" id="instructions">
-            💡 <strong>Tip:</strong> Click furniture to select, drag to move, use handles to rotate/resize. Hold <kbd>Space</kbd> to pan the canvas.
+            💡 <strong>Tip:</strong> Click furniture to select, drag to move, use handles to rotate/resize. Hold
+            <kbd>Space</kbd> to pan the canvas.
         </div>
         <div id="canvas-container"></div>
     </div>
 
-    <div class="room-info" id="roomInfo">
-        <h4>Room Details</h4>
-        <p id="roomDimensions">-</p>
-        <p id="roomType">-</p>
-        <p id="roomArea">-</p>
+    <!-- Room Settings Popover (Compressed with Arrow) -->
+    <div id="roomSettingsSidebar" class="rv-popover">
+        <div class="popover-arrow"></div>
+        <div class="popover-header">
+            <h3>Room Settings</h3>
+            <button id="closeSettingsBtn" class="close-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="popover-content">
+            <!-- Dimensions Section (Compressed) -->
+            <div class="settings-group">
+                <div class="group-label">DIMENSIONS</div>
+                <div class="compressed-inputs">
+                    <div class="input-field">
+                        <label>Width</label>
+                        <div class="unit-input">
+                            <input type="number" id="roomWidthNum" min="2" max="15" step="0.1">
+                            <span>m</span>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Length</label>
+                        <div class="unit-input">
+                            <input type="number" id="roomLengthNum" min="2" max="15" step="0.1">
+                            <span>m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aesthetics Section -->
+            <div class="settings-group">
+                <div class="group-label">AESTHETICS</div>
+                <div class="aesthetics-grid">
+                    <div class="aesthetic-item">
+                        <span>Wall</span>
+                        <div class="swatch-wrap">
+                            <input type="color" id="wallColorPicker2D" style="display:none">
+                            <div id="wallColorPreviewBtn" class="swatch-circle"></div>
+                        </div>
+                    </div>
+                    <div class="aesthetic-item">
+                        <span>Floor</span>
+                        <div class="swatch-wrap">
+                            <input type="color" id="floorColorPicker2D" style="display:none">
+                            <div id="floorColorPreviewBtn" class="swatch-circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consolidated Room Details -->
+            <div class="popover-details" id="roomInfo">
+                <div class="details-header">ROOM DETAILS</div>
+                <div class="details-grid">
+                    <div class="detail-line"><span class="lbl">Size:</span> <span id="roomDimensions">-</span></div>
+                    <div class="detail-line"><span class="lbl">Type:</span> <span id="roomType">-</span></div>
+                    <div class="detail-line"><span class="lbl">Area:</span> <span id="roomArea">-</span></div>
+                </div>
+            </div>
+
+            <div class="compact-tip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Auto-clamping enabled for shrink
+            </div>
+        </div>
     </div>
+
+    <style>
+        /* Popover Styling (Compressed) */
+        .rv-popover {
+            position: absolute;
+            top: 160px;
+            right: 70px;
+            width: 260px;
+            background: rgba(226, 232, 240, 0.95);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            border-radius: 20px;
+            display: none;
+            flex-direction: column;
+            color: #334155;
+            animation: rvPopupIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            transform-origin: top right;
+        }
+
+        .rv-popover.active {
+            display: flex;
+        }
+
+        .popover-arrow {
+            position: absolute;
+            top: -8px;
+            right: 120px;
+            width: 16px;
+            height: 16px;
+            background: rgba(226, 232, 240, 0.95);
+            transform: rotate(45deg);
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes rvPopupIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .popover-header {
+            padding: 1.25rem 1.25rem 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .popover-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #475569;
+        }
+
+        .popover-content {
+            padding: 0.75rem 1.25rem 1.25rem;
+        }
+
+        .settings-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .group-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 0.12em;
+            margin-bottom: 1rem;
+        }
+
+        /* Compressed Dimension Inputs */
+        .compressed-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #475569;
+        }
+
+        .unit-input {
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid rgba(203, 213, 225, 0.5);
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+        }
+
+        .unit-input input {
+            width: 100%;
+            border: none;
+            background: none;
+            font-weight: 800;
+            color: #1e293b;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .unit-input span {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-left: 4px;
+        }
+
+        /* Aesthetics Grid */
+        .aesthetics-grid {
+            display: flex;
+            gap: 24px;
+        }
+
+        .aesthetic-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .swatch-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .swatch-circle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Popover Details Section */
+        .popover-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .details-header {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #64748b;
+            margin-bottom: 8px;
+            letter-spacing: 0.1em;
+        }
+
+        .details-grid {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .detail-line .lbl {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .compact-tip {
+            margin-top: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
 
     <div class="shortcuts-help">
         <h4>⌨️ Keyboard Shortcuts</h4>
@@ -430,4 +750,5 @@ body {
     <script type="module" src="js/navbar.js"></script>
     <script type="module" src="js/editor-2d.js"></script>
 </body>
+
 </html>

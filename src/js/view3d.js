@@ -2,7 +2,15 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { db } from './firebase-config.js';
-import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { 
+    collection, 
+    getDocs, 
+    doc, 
+    addDoc, 
+    updateDoc, 
+    deleteDoc, 
+    serverTimestamp 
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 class Room3DVisualizer {
     constructor() {
@@ -803,6 +811,55 @@ class Room3DVisualizer {
         console.log(`💾 Updated furniture position: (${furniture.x.toFixed(1)}, ${furniture.y.toFixed(1)})`);
     }
     
+    async saveLayout() {
+        if (!this.layoutData || !this.layoutData.projectId || !this.layoutData.roomId) {
+            console.error("No project/room context found for 3D save.");
+            return;
+        }
+
+        console.log("💾 3D Visualizer: Starting layout save to Firestore...");
+        
+        try {
+            const projectId = this.layoutData.projectId;
+            const roomId = this.layoutData.roomId;
+            const roomRef = doc(db, `projects/${projectId}/rooms/${roomId}`);
+            const furnColl = collection(db, `projects/${projectId}/rooms/${roomId}/furniture`);
+
+            // 1. Delete existing furniture in sub-collection
+            const existingSnaps = await getDocs(furnColl);
+            const deletePromises = existingSnaps.docs.map(d => deleteDoc(d.ref));
+            await Promise.all(deletePromises);
+
+            // 2. Add current furniture state
+            const furnitureRefs = [];
+            for (const item of this.layoutData.furniture) {
+                // Remove transient fields
+                const { firestoreId, v3Rotation, v3Position, ...cleanItem } = item;
+                
+                // If it has V3 data, we keep it for next load
+                const itemToSave = { ...cleanItem };
+                if (v3Position) itemToSave.v3Position = v3Position;
+                if (v3Rotation !== undefined) itemToSave.v3Rotation = v3Rotation;
+
+                const dRef = await addDoc(furnColl, itemToSave);
+                furnitureRefs.push(dRef.id);
+            }
+
+            // 3. Update main room document
+            await updateDoc(roomRef, {
+                "layout.furnitureRefs": furnitureRefs,
+                "layout.updatedAt": new Date().toISOString(),
+                updatedAt: serverTimestamp()
+            });
+
+            console.log("✅ 3D layout successfully saved to Firestore!");
+            return true;
+        } catch (error) {
+            console.error("❌ 3D save failed:", error);
+            throw error;
+        }
+    }
+
     setupRotationButtons() {
         // Rotation buttons
         document.getElementById('rotateLeftBtn')?.addEventListener('click', () => this.rotateSelected(+15));
@@ -944,5 +1001,5 @@ class Room3DVisualizer {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    new Room3DVisualizer();
+    window.room3DVisualizer = new Room3DVisualizer();
 });
