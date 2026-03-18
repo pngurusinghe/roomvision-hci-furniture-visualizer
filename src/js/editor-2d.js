@@ -811,7 +811,7 @@ class RoomEditor2D {
             addFurnitureBtn.addEventListener('click', () => this.navigateToShop());
         }
 
-        const backToRoomBtn = document.getElementById('backToRoomBtn');
+        /* const backToRoomBtn = document.getElementById('backToRoomBtn');
         if (backToRoomBtn) {
             backToRoomBtn.addEventListener('click', () => {
                 if (this.projectId && this.roomId) {
@@ -822,7 +822,7 @@ class RoomEditor2D {
                     window.location.href = 'room-setup.html';
                 }
             });
-        }
+        } */
 
         // Download 2D floor plan as PNG
         const downloadBtn = document.getElementById('downloadBtn');

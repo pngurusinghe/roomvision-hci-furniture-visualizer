@@ -264,7 +264,7 @@
         }
 
         /* Instructions */
-        .instructions {
+        /* .instructions {
             position: fixed;
             top: 80px;
             left: 50%;
@@ -279,7 +279,7 @@
             animation: fadeIn 0.5s;
             text-align: center;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
-        }
+        } */
 
         @keyframes fadeIn {
             from {
@@ -390,13 +390,15 @@
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 8v8M8 12h8" />
                 </svg>
+                <span>Furniture</span>
             </button>
-            <button class="btn btn-secondary" id="backToRoomBtn" title="Back to Room">
+            <!-- <button class="btn btn-secondary" id="backToRoomBtn" title="Back to Room">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="15 18 9 12 15 6" />
                 </svg>
-            </button>
+                <span>Room</span>
+            </button> -->
             <button class="btn btn-secondary" id="downloadBtn" title="Download Image">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -404,6 +406,7 @@
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
+                <span>Export</span>
             </button>
             <button class="btn btn-secondary" id="editRoomBtn" title="Edit Room">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -412,6 +415,7 @@
                         d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                     <circle cx="12" cy="12" r="3" />
                 </svg>
+                <span>Settings</span>
             </button>
             <button class="btn btn-primary" id="view3dBtn" title="View in 3D"
                 style="background:var(--success); border-color:var(--success);">
@@ -420,6 +424,7 @@
                     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
                     <circle cx="12" cy="12" r="3" />
                 </svg>
+                <span>3D View</span>
             </button>
             <button class="btn btn-primary" id="saveBtn" title="Save Layout">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -428,6 +433,7 @@
                     <polyline points="17 21 17 13 7 13 7 21" />
                     <polyline points="7 3 7 8 15 8" />
                 </svg>
+                <span>Save</span>
             </button>
         </div>
     </div>
@@ -435,10 +441,10 @@
 
 
     <div class="canvas-area" id="canvasArea">
-        <div class="instructions" id="instructions">
+        <!-- <div class="instructions" id="instructions">
             💡 <strong>Tip:</strong> Click furniture to select, drag to move, use handles to rotate/resize. Hold
             <kbd>Space</kbd> to pan the canvas.
-        </div>
+        </div> -->
         <div id="canvas-container"></div>
     </div>
 
@@ -505,13 +511,6 @@
                     <div class="detail-line"><span class="lbl">Type:</span> <span id="roomType">-</span></div>
                     <div class="detail-line"><span class="lbl">Area:</span> <span id="roomArea">-</span></div>
                 </div>
-            </div>
-
-            <div class="compact-tip">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Auto-clamping enabled for shrink
             </div>
         </div>
     </div>
