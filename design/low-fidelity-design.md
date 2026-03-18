@@ -1,5 +1,5 @@
 # Low-Fidelity UI Design – RoomVision
-
+All Low fiderlity diagrams which are hand driwwen have been included to the report
 ## 1. Purpose
 The purpose of the low-fidelity design phase is to explore layout ideas and interaction flows without focusing on visual aesthetics. This allows early feedback to be gathered and usability issues to be identified before high-fidelity prototyping and implementation.
 
