@@ -1,12 +1,19 @@
 /**
  * Admin Furniture Management
- * Handles adding, viewing, and deleting furniture items
- * Images stored as base64 in Firestore (no Firebase Storage required)
+ * Handles adding, viewing, and deleting 2D furniture items AND 3D models.
+ * 2D images stored as base64 in Firestore.
+ * 3D models (.glb/.gltf) stored in Firebase Storage; metadata in Firestore `furniture3d`.
  */
 
-import { auth, db } from './firebase-config.js';
+import { auth, db, storage } from './firebase-config.js';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import {
+    ref as storageRef,
+    uploadBytesResumable,
+    getDownloadURL,
+    deleteObject
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 // Check admin access
 onAuthStateChanged(auth, (user) => {
@@ -26,6 +33,74 @@ onAuthStateChanged(auth, (user) => {
 
     console.log('Admin access granted');
     loadFurniture();
+    loadModels3D();
+    loadFurnitureDropdown();
+});
+
+// UI: Tab Switching
+window.switchTab = function(tab) {
+    const section2d = document.getElementById('section2d');
+    const section3d = document.getElementById('section3d');
+    const btn2d = document.getElementById('tab2dBtn');
+    const btn3d = document.getElementById('tab3dBtn');
+
+    if (tab === '2d') {
+        section2d.classList.add('active');
+        section3d.classList.remove('active');
+
+        btn2d.classList.add('text-primary', 'border-primary');
+        btn2d.classList.remove('text-muted-foreground', 'border-transparent');
+
+        btn3d.classList.add('text-muted-foreground', 'border-transparent');
+        btn3d.classList.remove('text-accent', 'border-accent');
+    } else {
+        section3d.classList.add('active');
+        section2d.classList.remove('active');
+
+        btn3d.classList.add('text-accent', 'border-accent');
+        btn3d.classList.remove('text-muted-foreground', 'border-transparent');
+
+        btn2d.classList.add('text-muted-foreground', 'border-transparent');
+        btn2d.classList.remove('text-primary', 'border-primary');
+    }
+};
+
+// UI: 3D Model Source Switching
+window.setModelSource = function(mode) {
+    const isUpload = mode === 'upload';
+    const uploadPanel = document.getElementById('srcUploadPanel');
+    const urlPanel = document.getElementById('srcUrlPanel');
+    const uploadBtn = document.getElementById('srcUploadBtn');
+    const urlBtn = document.getElementById('srcUrlBtn');
+
+    if (isUpload) {
+        uploadPanel.classList.remove('hidden');
+        urlPanel.classList.add('hidden');
+
+        uploadBtn.classList.add('bg-background', 'text-foreground', 'shadow-sm', 'border', 'border-border');
+        uploadBtn.classList.remove('text-muted-foreground', 'hover:text-foreground');
+
+        urlBtn.classList.remove('bg-background', 'text-foreground', 'shadow-sm', 'border', 'border-border');
+        urlBtn.classList.add('text-muted-foreground', 'hover:text-foreground');
+        urlBtn.style.border = "none";
+    } else {
+        urlPanel.classList.remove('hidden');
+        uploadPanel.classList.add('hidden');
+
+        urlBtn.classList.add('bg-background', 'text-foreground', 'shadow-sm', 'border', 'border-border');
+        urlBtn.classList.remove('text-muted-foreground', 'hover:text-foreground');
+
+        uploadBtn.classList.remove('bg-background', 'text-foreground', 'shadow-sm', 'border', 'border-border');
+        uploadBtn.classList.add('text-muted-foreground', 'hover:text-foreground');
+        uploadBtn.style.border = "none";
+    }
+
+    document.getElementById('addModel3DForm').dataset.sourceMode = mode;
+};
+
+// Initialize display after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.setModelSource) window.setModelSource('url');
 });
 
 // Logout function
@@ -89,7 +164,7 @@ document.getElementById('addFurnitureForm').addEventListener('submit', async fun
         return;
     }
 
-    const submitBtn = e.target.querySelector('.btn-primary');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
 
     try {
         submitBtn.textContent = 'Saving...';
@@ -162,16 +237,27 @@ async function loadFurniture() {
         querySnapshot.forEach((document) => {
             const item = document.data();
             html += `
-                <div class="furniture-item">
-                    <img src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/80?text=Error'">
-                    <div class="furniture-info">
-                        <div class="furniture-name">${item.name}</div>
-                        <div class="furniture-meta">
-                            ${item.category} • ${item.width}m × ${item.height}m • $${item.price}
-                        </div>
+                <div class="group bg-background border border-border rounded-lg p-4 flex gap-4 items-center transition-all hover:shadow-md hover:border-primary/20">
+                    <div class="relative w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                        <img src="${item.image}" alt="${item.name}" 
+                             class="w-full h-full object-cover"
+                             onerror="this.src='https://via.placeholder.com/80?text=Error'">
                     </div>
-                    <button class="btn-delete" onclick="deleteFurniture('${document.id}')">
-                        Delete
+                    
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-foreground truncate">${item.name}</div>
+                        <div class="text-xs text-muted-foreground flex items-center gap-2 mt-1 uppercase tracking-wider font-semibold">
+                            <span class="bg-muted px-1.5 py-0.5 rounded text-[10px]">${item.category}</span>
+                            <span>${item.width}m × ${item.height}m</span>
+                        </div>
+                        <div class="text-xs font-bold text-primary mt-1">$${item.price}</div>
+                    </div>
+
+                    <button class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            onclick="deleteFurniture('${document.id}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2">
+                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>
+                        </svg>
                     </button>
                 </div>
             `;
@@ -199,5 +285,232 @@ window.deleteFurniture = async function (furnitureId) {
     } catch (error) {
         console.error('Error deleting furniture:', error);
         alert('Error deleting furniture: ' + error.message);
+    }
+};
+
+// ============================================================
+//  3D MODEL MANAGEMENT
+// ============================================================
+
+// Populate the "Link to Furniture Item" dropdown from the `furniture` collection
+async function loadFurnitureDropdown() {
+    const select = document.getElementById('model3dFurnitureId');
+    if (!select) return;
+
+    try {
+        const snapshot = await getDocs(collection(db, 'furniture'));
+        if (snapshot.empty) {
+            select.innerHTML = '<option value="">No furniture items found — add some first</option>';
+            return;
+        }
+
+        let html = '<option value="">Select furniture item…</option>';
+        snapshot.forEach(d => {
+            const item = d.data();
+            html += `<option value="${d.id}">${item.name} (${item.category || ''} · ${item.width}m × ${item.height}m)</option>`;
+        });
+        select.innerHTML = html;
+    } catch (err) {
+        console.error('Error loading furniture dropdown:', err);
+        select.innerHTML = '<option value="">Error loading items</option>';
+    }
+}
+
+// Show selected GLB filename
+document.getElementById('model3dFile').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    const nameEl = document.getElementById('model3dFilename');
+    if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File is too large. Please use a GLB file under 10 MB.');
+            e.target.value = '';
+            nameEl.textContent = '';
+            return;
+        }
+        nameEl.textContent = `📎 ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+    } else {
+        nameEl.textContent = '';
+    }
+});
+
+// Upload a 3D model form submission (supports both File upload and direct URL)
+document.getElementById('addModel3DForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const furnitureId = document.getElementById('model3dFurnitureId').value;
+    const widthM = parseFloat(document.getElementById('model3dWidth').value);
+    const depthM = parseFloat(document.getElementById('model3dDepth').value);
+    const heightM = parseFloat(document.getElementById('model3dHeight').value);
+    const sourceMode = this.dataset.sourceMode || 'url';
+
+    if (!furnitureId) { alert('Please select a furniture item to link.'); return; }
+
+    const submitBtn = document.getElementById('addModel3DBtn');
+    submitBtn.textContent = 'Saving…';
+    submitBtn.disabled = true;
+
+    try {
+        let storageUrl = '';
+        let storagePath = '';
+        let filename = '';
+
+        if (sourceMode === 'upload') {
+            // ---- Firebase Storage upload path ----
+            const glbFile = document.getElementById('model3dFile').files[0];
+            if (!glbFile) { alert('Please select a GLB/GLTF file.'); return; }
+
+            const progressWrap = document.getElementById('model3dProgressWrap');
+            const progressBar = document.getElementById('model3dProgress');
+            progressWrap.style.display = 'block';
+
+            storagePath = `models3d/${Date.now()}_${glbFile.name}`;
+            const fileRef = storageRef(storage, storagePath);
+            const uploadTask = uploadBytesResumable(fileRef, glbFile);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {
+                        const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        progressBar.style.width = `${pct}%`;
+                    },
+                    reject,
+                    resolve
+                );
+            });
+
+            storageUrl = await getDownloadURL(fileRef);
+            filename = glbFile.name;
+
+            progressWrap.style.display = 'none';
+            progressBar.style.width = '0%';
+
+        } else {
+            // ---- Direct URL path (no Firebase Storage required) ----
+            storageUrl = document.getElementById('model3dUrl').value.trim();
+            if (!storageUrl) { alert('Please enter a GLB URL.'); return; }
+            if (!storageUrl.match(/^https?:\/\/.+\.(glb|gltf)(\?.*)?$/i)) {
+                alert('URL must end in .glb or .gltf (with optional query string).');
+                return;
+            }
+            filename = storageUrl.split('/').pop().split('?')[0];
+        }
+
+        // Save metadata to Firestore `furniture3d`
+        await addDoc(collection(db, 'furniture3d'), {
+            furnitureId,
+            widthM,
+            depthM,
+            heightM,
+            storagePath,
+            storageUrl,
+            filename,
+            sourceMode,
+            createdAt: new Date().toISOString()
+        });
+
+        alert('3D model saved successfully!');
+        e.target.reset();
+        document.getElementById('model3dFilename').textContent = '';
+        loadModels3D();
+
+    } catch (error) {
+        console.error('Error saving 3D model:', error);
+        alert('Failed: ' + error.message);
+    } finally {
+        submitBtn.textContent = 'Save 3D Model';
+        submitBtn.disabled = false;
+    }
+});
+
+// Load and display uploaded 3D models
+async function loadModels3D() {
+    const listContainer = document.getElementById('model3dList');
+    if (!listContainer) return;
+
+    try {
+        const fetchPromise = getDocs(collection(db, 'furniture3d'));
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout after 10s')), 10000)
+        );
+        const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
+
+        if (snapshot.empty) {
+            listContainer.innerHTML = '<div class="loading">No 3D models uploaded yet.</div>';
+            return;
+        }
+
+        // Also build a quick name-lookup from the furniture collection
+        const furnitureSnap = await getDocs(collection(db, 'furniture'));
+        const nameMap = {};
+        furnitureSnap.forEach(d => { nameMap[d.id] = d.data().name || d.id; });
+
+        let html = '';
+        snapshot.forEach(d => {
+            const m = d.data();
+            const linkedName = nameMap[m.furnitureId] || m.furnitureId;
+            html += `
+                <div class="group bg-background border border-border rounded-lg p-4 flex gap-4 items-center transition-all hover:shadow-md hover:border-accent/20">
+                    <div class="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center text-accent flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box">
+                            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                            <path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-foreground truncate">${m.filename || 'model.glb'}</div>
+                        <div class="text-xs text-muted-foreground mt-1 lowercase">
+                            Linked: <span class="font-bold text-foreground">${linkedName}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <a href="${m.storageUrl}" target="_blank" 
+                               class="text-[10px] font-bold uppercase tracking-wider text-accent hover:underline">
+                                Source Binary
+                            </a>
+                            <span class="text-muted-foreground/30">•</span>
+                            <span class="text-[10px] items-center text-muted-foreground font-medium">
+                                ${m.widthM}m × ${m.depthM}m × ${m.heightM}m
+                            </span>
+                        </div>
+                    </div>
+
+                    <button class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            onclick="deleteModel3D('${d.id}', '${m.storagePath}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2">
+                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        });
+
+        listContainer.innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading 3D models:', error);
+        listContainer.innerHTML = `<div class="loading">Error loading 3D models: ${error.message}</div>`;
+    }
+}
+
+// Delete a 3D model from Storage and Firestore
+window.deleteModel3D = async function (docId, storagePath) {
+    if (!confirm('Delete this 3D model? This cannot be undone.')) return;
+
+    try {
+        // Remove from Firebase Storage
+        if (storagePath) {
+            const fileRef = storageRef(storage, storagePath);
+            await deleteObject(fileRef).catch(e => console.warn('Storage delete skipped:', e));
+        }
+
+        // Remove Firestore document
+        await deleteDoc(doc(db, 'furniture3d', docId));
+
+        alert('3D model deleted.');
+        loadModels3D();
+    } catch (error) {
+        console.error('Error deleting 3D model:', error);
+        alert('Error: ' + error.message);
     }
 };
